@@ -3,11 +3,7 @@ package com.github.dfauth.trycatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class TryCatch {
 
@@ -64,15 +60,5 @@ public class TryCatch {
         }
     }
 
-    @FunctionalInterface
-    interface ExceptionalSupplier<T> {
-        T get() throws Throwable;
-    }
-
-    @FunctionalInterface
-    interface ExceptionalRunnable {
-        void run() throws Throwable;
-    }
-
-    interface ThrowableHandler<T> extends Function<Throwable, T> {};
+    ;
 }
