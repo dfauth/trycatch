@@ -51,6 +51,17 @@ public class TestCase {
             assertNotNull(result);
             assertTrue(result.isFailure());
         }
+
+        {
+            Try<Integer> t = tryWith(() -> 0);
+            assertNotNull(t);
+            assertTrue(t.isSuccess());
+            Try<Integer> result = t.map(v -> 1/v);
+            assertNotNull(result);
+            assertTrue(result.isFailure());
+            assertEquals(Try.Failure.class.cast(result).exception().getClass(), ArithmeticException.class);
+            assertEquals(Try.Failure.class.cast(result).exception().getMessage(), "/ by zero");
+        }
     }
 
     @Test
