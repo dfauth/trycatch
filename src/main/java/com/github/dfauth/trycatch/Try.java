@@ -43,6 +43,22 @@ public interface Try<T> {
 
     boolean isSuccess();
 
+    default Failure<T> toFailure() throws ClassCastException {
+        return toFailure(this);
+    }
+
+    default Success<T> toSuccess()  throws ClassCastException {
+        return toSuccess(this);
+    }
+
+    static <T> Failure<T> toFailure(Try<T> t) {
+        return Failure.class.cast(t);
+    }
+
+    static <T> Success<T> toSuccess(Try<T> t) {
+        return Success.class.cast(t);
+    }
+
     class Success<T> implements Try<T> {
 
         private final T result;

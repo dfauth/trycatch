@@ -59,8 +59,8 @@ public class TestCase {
             Try<Integer> result = t.map(v -> 1/v);
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertEquals(Try.Failure.class.cast(result).exception().getClass(), ArithmeticException.class);
-            assertEquals(Try.Failure.class.cast(result).exception().getMessage(), "/ by zero");
+            assertTrue(result.toFailure().exception() instanceof ArithmeticException);
+            assertEquals(result.toFailure().exception().getMessage(), "/ by zero");
         }
     }
 
@@ -73,7 +73,7 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isSuccess());
-            assertEquals(result.toOptional().get().intValue(), 2);
+            assertEquals(result.toSuccess().result().intValue(), 2);
         }
 
         {
@@ -86,7 +86,7 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertEquals(Try.Failure.class.cast(result).exception(), oops);
+            assertEquals(result.toFailure().exception(), oops);
         }
     }
 }
