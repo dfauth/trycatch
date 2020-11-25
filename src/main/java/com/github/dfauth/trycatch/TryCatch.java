@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
+
+import static com.github.dfauth.trycatch.ThrowableHandler.noOp;
 
 public class TryCatch {
 
@@ -36,30 +37,7 @@ public class TryCatch {
         }
     }
 
-    public static void tryCatch(ExceptionalRunnable runnable) {
-        tryCatch(runnable, t -> {
-            throw new RuntimeException(t);
-        }, noOpFinalRunnable);
+    public static void tryCatchIgnore(Callable<Void> c) {
+        tryCatch(c, noOp(), noOpFinalRunnable);
     }
-
-    public static void tryCatchIgnore(ExceptionalRunnable runnable) {
-        tryCatch(runnable, t -> {}, noOpFinalRunnable);
-    }
-
-    public static void tryCatch(ExceptionalRunnable runnable, Consumer<Throwable> handler) {
-        tryCatch(runnable, handler, noOpFinalRunnable);
-    }
-
-    public static void tryCatch(ExceptionalRunnable runnable, Consumer<Throwable> handler, Runnable finalRunnable) {
-        try {
-            runnable.run();
-        } catch (Throwable t) {
-            logger.error(t.getMessage(), t);
-            handler.accept(t);
-        } finally {
-            finalRunnable.run();
-        }
-    }
-
-    ;
 }

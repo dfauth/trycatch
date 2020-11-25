@@ -27,16 +27,7 @@ public interface Try<T> {
     Optional<T> toOptional();
 
     static <T> Try<T> tryWith(Callable<T> c) {
-        return tryCatch(() -> {
-            return new Success<>(c.call());
-        }, t -> new Failure<>(t));
-    }
-
-    static Try<Void> tryWith(ExceptionalRunnable r) {
-        return tryCatch(() -> {
-            r.run();
-            return new Success<Void>(null);
-        }, t -> new Failure<Void>(t));
+        return tryCatch(() -> new Success<>(c.call()), t -> new Failure<>(t));
     }
 
     boolean isFailure();
