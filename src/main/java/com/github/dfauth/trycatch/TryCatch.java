@@ -3,6 +3,7 @@ package com.github.dfauth.trycatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class TryCatch {
@@ -16,17 +17,17 @@ public class TryCatch {
     }
     private static Runnable noOpFinalRunnable = () -> {};
 
-    public static <T> T tryCatch(ExceptionalSupplier<T> supplier) {
-        return tryCatch(supplier, propagationHandler(), noOpFinalRunnable);
+    public static <T> T tryCatch(Callable<T> c) {
+        return tryCatch(c, propagationHandler(), noOpFinalRunnable);
     }
 
-    public static <T> T tryCatch(ExceptionalSupplier<T> supplier, ThrowableHandler<T> handler) {
-        return tryCatch(supplier, handler, noOpFinalRunnable);
+    public static <T> T tryCatch(Callable<T> c, ThrowableHandler<T> handler) {
+        return tryCatch(c, handler, noOpFinalRunnable);
     }
 
-    public static <T> T tryCatch(ExceptionalSupplier<T> supplier, ThrowableHandler<T> handler, Runnable finalRunnable) {
+    public static <T> T tryCatch(Callable<T> c, ThrowableHandler<T> handler, Runnable finalRunnable) {
         try {
-            return supplier.get();
+            return c.call();
         } catch (Throwable t) {
             logger.error(t.getMessage(), t);
             return handler.apply(t);
