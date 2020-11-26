@@ -42,6 +42,14 @@ public interface Try<T> {
         return toSuccess(this);
     }
 
+    static <T> Failure<T> failure(Throwable t) {
+        return new Failure(t);
+    }
+
+    static <T> Success<T> success(T t) {
+        return new Success<T>(t);
+    }
+
     static <T> Failure<T> toFailure(Try<T> t) {
         return Failure.class.cast(t);
     }
