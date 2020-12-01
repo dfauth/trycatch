@@ -5,6 +5,7 @@ gradlew*
 /.classpath
 /.project
 /target
+/build
 /.idea
 */.idea
 *.iml

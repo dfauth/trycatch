@@ -16,6 +16,8 @@ public class TestCase {
     @Test
     public void testTryCatch() {
 
+        tryCatch(() -> {});
+
         try {
             tryCatch(() -> {
                 throw new RuntimeException("Oops");
