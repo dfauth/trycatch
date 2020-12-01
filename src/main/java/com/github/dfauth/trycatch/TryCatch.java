@@ -44,4 +44,12 @@ public class TryCatch {
     public static void tryCatchIgnore(Callable<Void> c) {
         tryCatch(c, noOp(), noOpFinalRunnable);
     }
+
+    public static Runnable withExceptionLogging(Runnable r) {
+        return () -> tryCatch(() -> r.run());
+    }
+
+    public static <T> Callable<T> withExceptionLogging(Callable<T> c) {
+        return () -> tryCatch((Callable<T>)() -> c.call());
+    }
 }

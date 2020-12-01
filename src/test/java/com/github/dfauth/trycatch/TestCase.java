@@ -4,9 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.*;
+
 import static com.github.dfauth.trycatch.Try.tryWith;
-import static com.github.dfauth.trycatch.TryCatch.tryCatch;
-import static com.github.dfauth.trycatch.TryCatch.tryCatchIgnore;
+import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.testng.Assert.*;
 
 public class TestCase {
@@ -14,7 +15,7 @@ public class TestCase {
     private static final Logger logger = LoggerFactory.getLogger(TestCase.class);
 
     @Test
-    public void testTryCatch() {
+    public void testTryCatch() throws InterruptedException, ExecutionException, TimeoutException {
 
         tryCatch(() -> {});
 
@@ -29,6 +30,27 @@ public class TestCase {
         tryCatchIgnore(() -> {
             throw new RuntimeException("Oops");
         });
+
+        Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {})).get(1, TimeUnit.SECONDS);
+
+        String result = "result";
+        assertEquals(result, Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> result)).get(1, TimeUnit.SECONDS));
+
+        Future<?> f = Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {
+            throw new RuntimeException("Oops");
+        }));
+        try {
+            f.get(1, TimeUnit.SECONDS);
+            fail("Oops. expected ExecutionException");
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            // expected
+        } catch (TimeoutException e) {
+            logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
