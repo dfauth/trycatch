@@ -41,8 +41,12 @@ public class TryCatch {
         }
     }
 
-    public static void tryCatchIgnore(Callable<Void> c) {
-        tryCatch(c, noOp(), noOpFinalRunnable);
+    public static void tryCatchIgnore(ExceptionalRunnable r) {
+        tryCatch(r, noOp(), noOpFinalRunnable);
+    }
+
+    public static <T> T tryCatchIgnore(Callable<T> c, T defaultValueOfT) {
+        return tryCatch(c, t -> defaultValueOfT, noOpFinalRunnable);
     }
 
     public static Runnable withExceptionLogging(Runnable r) {

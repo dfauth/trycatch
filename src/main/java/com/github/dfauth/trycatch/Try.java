@@ -27,7 +27,7 @@ public interface Try<T> {
     Optional<T> toOptional();
 
     static <T> Try<T> tryWith(Callable<T> c) {
-        return tryCatch(() -> new Success<>(c.call()), t -> new Failure<>(t));
+        return tryCatch(() -> new Success<>(c.call()), Failure::new);
     }
 
     boolean isFailure();
@@ -43,15 +43,16 @@ public interface Try<T> {
     }
 
     static <T> Failure<T> failure(Throwable t) {
-        return new Failure(t);
+        return new Failure<>(t);
     }
 
     static <T> Success<T> success(T t) {
         return new Success<T>(t);
     }
 
+    @SuppressWarnings("unchecked")
     static <T> Failure<T> toFailure(Try<T> t) {
-        return Failure.class.cast(t);
+        return (Failure) t;
     }
 
     static <T> Success<T> toSuccess(Try<T> t) {

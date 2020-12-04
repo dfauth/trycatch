@@ -15,13 +15,14 @@ public class TestCase {
     private static final Logger logger = LoggerFactory.getLogger(TestCase.class);
 
     @Test
-    public void testTryCatch() throws InterruptedException, ExecutionException, TimeoutException {
+    public void testTryCatch() {
 
         // Runnable
-        tryCatch(() -> {});
+        tryCatch(() -> {
+        });
 
         // Callable
-        assertEquals(tryCatch(() -> 1).intValue(), 1);
+        assertEquals(1, tryCatch(() -> 1).intValue());
 
         // void return throws exception
         tryCatch(() -> Thread.sleep(100));
@@ -39,7 +40,7 @@ public class TestCase {
         // Callable
         try {
             tryCatch(() -> {
-                if(true) {
+                if (true) {
                     throw new Exception("Oops");
                 }
                 return 1;
@@ -58,19 +59,36 @@ public class TestCase {
         } catch (RuntimeException e) {
             // expected;
         }
+    }
 
-        // WOOZ
+    @Test
+    public void testTryCatchIgnore() {
+
         tryCatchIgnore(() -> {
-            throw new RuntimeException("Oops");
+            throw new Exception("Oops");
         });
 
+        tryCatchIgnore(() -> {
+        });
+
+        assertEquals(1, tryCatchIgnore(() -> {
+            throw new Exception("Oops");
+        }, 1).intValue());
+    }
+
+    @Test
+    public void testWithExceptionLogging() throws InterruptedException, ExecutionException, TimeoutException {
+
+        // Runnable
         Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {})).get(1, TimeUnit.SECONDS);
 
+        // Callable
         String result = "result";
         assertEquals(result, Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> result)).get(1, TimeUnit.SECONDS));
 
+        // ExceptionalRunnable
         Future<?> f = Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {
-            throw new RuntimeException("Oops");
+            throw new Exception("Oops");
         }));
         try {
             f.get(1, TimeUnit.SECONDS);
