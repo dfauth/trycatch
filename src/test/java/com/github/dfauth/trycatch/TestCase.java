@@ -113,7 +113,7 @@ public class TestCase {
             Try<Integer> result = t.map(v -> 2*v);
             assertNotNull(result);
             assertTrue(result.isSuccess());
-            assertEquals(result.toOptional().get().intValue(), 2);
+            assertEquals(2, result.toOptional().get().intValue());
         }
 
         {

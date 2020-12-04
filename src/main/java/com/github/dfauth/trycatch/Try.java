@@ -47,7 +47,7 @@ public interface Try<T> {
     }
 
     static <T> Success<T> success(T t) {
-        return new Success<T>(t);
+        return new Success<>(t);
     }
 
     @SuppressWarnings("unchecked")
@@ -55,8 +55,9 @@ public interface Try<T> {
         return (Failure) t;
     }
 
+    @SuppressWarnings("unchecked")
     static <T> Success<T> toSuccess(Try<T> t) {
-        return Success.class.cast(t);
+        return (Success) t;
     }
 
     class Success<T> implements Try<T> {
