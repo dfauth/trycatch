@@ -148,7 +148,7 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isSuccess());
-            assertEquals(result.toSuccess().result().intValue(), 2);
+            assertEquals(2, result.toSuccess().result().intValue());
         }
 
         {
@@ -161,7 +161,19 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertEquals(result.toFailure().exception(), oops);
+            assertEquals(oops, result.toFailure().exception());
+        }
+
+        {
+            Try<Integer> t = tryWith(() -> 0);
+            assertNotNull(t);
+            assertTrue(t.isSuccess());
+            Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
+            assertNotNull(result);
+            assertTrue(result.isFailure());
+            assertThrows(ArithmeticException.class, () -> {
+                result.toFailure().throwException();
+            });
         }
     }
 }

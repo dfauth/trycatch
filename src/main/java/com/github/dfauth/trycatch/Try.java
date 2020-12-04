@@ -143,5 +143,9 @@ public interface Try<T> {
         public Throwable exception() {
             return this.t;
         }
+
+        public void throwException() throws Throwable {
+            throw this.t;
+        }
     }
 }
