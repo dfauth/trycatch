@@ -176,4 +176,42 @@ public class TestCase {
             });
         }
     }
+
+    @Test
+    public void testTryWithAsync() throws InterruptedException, ExecutionException, TimeoutException {
+
+        {
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
+            Try<Integer> result = f.get(1, TimeUnit.SECONDS);
+            assertTrue(result.isSuccess());
+            assertEquals(2, result.toSuccess().result().intValue());
+        }
+
+        {
+            CompletableFuture<Integer> f = executeAsync(() -> 0).thenApply(i -> 2/i);
+            assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
+        }
+
+        {
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
+            Try<Integer> result = f.get(1, TimeUnit.SECONDS);
+            assertTrue(result.isFailure());
+            assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
+        }
+    }
+
+    private <T> CompletableFuture<T> executeAsync(Callable<T> callable) {
+        return executeAsync(callable, Executors.newSingleThreadExecutor());
+    }
+
+    private <T> CompletableFuture<T> executeAsync(Callable<T> callable, ExecutorService executor) {
+        CompletableFuture<T> f = new CompletableFuture<>();
+        executor.submit(() -> tryCatch(() -> {
+            T result = callable.call();
+            f.complete(result);
+            return result;
+        }, t -> f.completeExceptionally(t)));
+        return f;
+    }
+
 }
