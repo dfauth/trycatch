@@ -18,8 +18,8 @@ public class TryCatch {
     }
     private static Runnable noOpFinalRunnable = () -> {};
 
-    public static void tryCatch(VoidCallable c) {
-        tryCatch(c, propagationHandler(), noOpFinalRunnable);
+    public static void tryCatch(ExceptionalRunnable r) {
+        tryCatch(r, propagationHandler(), noOpFinalRunnable);
     }
 
     public static <T> T tryCatch(Callable<T> c) {

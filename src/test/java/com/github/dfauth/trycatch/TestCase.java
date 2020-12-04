@@ -1,14 +1,14 @@
 package com.github.dfauth.trycatch;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
 
 import java.util.concurrent.*;
 
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
-import static org.testng.Assert.*;
+import static org.junit.Assert.*;
 
 public class TestCase {
 
@@ -17,8 +17,16 @@ public class TestCase {
     @Test
     public void testTryCatch() throws InterruptedException, ExecutionException, TimeoutException {
 
+        // Runnable
         tryCatch(() -> {});
 
+        // Callable
+        assertEquals(tryCatch(() -> 1).intValue(), 1);
+
+        // void return throws exception
+        tryCatch(() -> Thread.sleep(100));
+
+        // Runnable
         try {
             tryCatch(() -> {
                 throw new RuntimeException("Oops");
@@ -27,6 +35,31 @@ public class TestCase {
         } catch (RuntimeException e) {
             // expected;
         }
+
+        // Callable
+        try {
+            tryCatch(() -> {
+                if(true) {
+                    throw new Exception("Oops");
+                }
+                return 1;
+            });
+            fail("Oops, expected exception");
+        } catch (RuntimeException e) {
+            // expected;
+        }
+
+        // void return throws exception
+        try {
+            tryCatch(() -> {
+                throw new Exception("Oops");
+            });
+            fail("Oops, expected exception");
+        } catch (RuntimeException e) {
+            // expected;
+        }
+
+        // WOOZ
         tryCatchIgnore(() -> {
             throw new RuntimeException("Oops");
         });
