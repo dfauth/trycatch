@@ -10,7 +10,23 @@ import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public interface Try<T> {
 
-    void onComplete(BiConsumer<T,Throwable> handler);
+    default void onComplete(BiConsumer<T,Throwable> fn) {
+        despatch(new DespatchHandler<T, Void>() {
+            @Override
+            public Void despatch(Failure<T> f) {
+                fn.accept(null, f.exception());
+                return null;
+            }
+
+            @Override
+            public Void despatch(Success<T> s) {
+                fn.accept(s.result(), null);
+                return null;
+            }
+        });
+    }
+
+    <V> V despatch(DespatchHandler<T,V> handler);
 
     default void onSuccess(Consumer<T> c) {
         toOptional().ifPresent(c);
@@ -52,100 +68,31 @@ public interface Try<T> {
 
     @SuppressWarnings("unchecked")
     static <T> Failure<T> toFailure(Try<T> t) {
-        return (Failure) t;
+        return t.despatch(new DespatchHandler<>() {
+            @Override
+            public Failure<T> despatch(Failure<T> f) {
+                return f;
+            }
+
+            @Override
+            public Failure<T> despatch(Success<T> s) {
+                throw new IllegalStateException("Oops");
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
     static <T> Success<T> toSuccess(Try<T> t) {
-        return (Success) t;
-    }
+        return t.despatch(new DespatchHandler<>() {
+            @Override
+            public Success<T> despatch(Failure<T> f) {
+                throw new IllegalStateException("Oops");
+            }
 
-    class Success<T> implements Try<T> {
-
-        private final T result;
-
-        public Success(T t) {
-            result = t;
-        }
-
-        @Override
-        public void onComplete(BiConsumer<T, Throwable> handler) {
-            handler.accept(result, null);
-        }
-
-        @Override
-        public <R> Try<R> map(Function<T, R> f) {
-            return Try.tryWith(() -> f.apply(result));
-        }
-
-        @Override
-        public <R> Try<R> flatMap(Function<T, Try<R>> f) {
-            return map(f).toOptional().get();
-        }
-
-        @Override
-        public Optional<T> toOptional() {
-            return Optional.ofNullable(result);
-        }
-
-        @Override
-        public boolean isFailure() {
-            return !isSuccess();
-        }
-
-        @Override
-        public boolean isSuccess() {
-            return true;
-        }
-
-        public T result() {
-            return result;
-        }
-    }
-
-    class Failure<T> implements Try<T> {
-        private final Throwable t;
-
-        public Failure(Throwable t) {
-            this.t = t;
-        }
-
-        @Override
-        public void onComplete(BiConsumer<T, Throwable> handler) {
-            handler.accept(null, t);
-        }
-
-        @Override
-        public <R> Try<R> map(Function<T, R> f) {
-            return new Failure<>(t);
-        }
-
-        @Override
-        public <R> Try<R> flatMap(Function<T, Try<R>> f) {
-            return map(f).toOptional().orElse(new Failure<>(t));
-        }
-
-        @Override
-        public Optional<T> toOptional() {
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean isFailure() {
-            return true;
-        }
-
-        @Override
-        public boolean isSuccess() {
-            return !isFailure();
-        }
-
-        public Throwable exception() {
-            return this.t;
-        }
-
-        public void throwException() throws Throwable {
-            throw this.t;
-        }
+            @Override
+            public Success<T> despatch(Success<T> s) {
+                return s;
+            }
+        });
     }
 }
