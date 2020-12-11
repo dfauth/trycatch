@@ -1,11 +1,16 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.PartialConsumer;
+import com.github.dfauth.partial.PartialFunction;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
+import static com.github.dfauth.partial.VoidFunction.peek;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
@@ -200,11 +205,89 @@ public class TestCase {
         }
     }
 
-    private <T> CompletableFuture<T> executeAsync(Callable<T> callable) {
+    @Test
+    public void testOnComplete() {
+        {
+            Try<Integer> t = Try.success(1);
+            t.onComplete(
+                    _case((Try<Integer> _t) -> t.isSuccess())
+                            .thenAccept(_t -> logger.info("t is success")),
+                    _case((Try<Integer> _t) -> t.isFailure())
+                            .thenAccept(_t -> logger.info("t is failu7re"))
+            );
+        }
+        {
+            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess())
+                            .thenAccept(_t -> logger.info(_t+" is success")),
+                    _case((Try<Integer> _t) -> _t.isFailure())
+                            .thenAccept(_t -> logger.info(_t+" is failu7re"))
+            );
+        }
+        {
+            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess())
+                            .thenAccept(_t -> logger.info(_t+" is success"))
+                    .otherwise(_t -> logger.info("otherwise("+_t+")"))
+            );
+        }
+        {
+            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess())
+                            .thenAccept(_t -> logger.info(_t+" is success")),
+                    _case((Try<Integer> _t) -> _t.isFailure())
+                            .thenAccept(_t -> logger.info(_t+" is failu7re"))
+                    .otherwise(_t -> logger.info("otherwise("+_t+")"))
+            );
+        }
+        {
+            Try<Integer> t = Try.success(1);
+            t.onComplete(
+                    _case(downcast((Try<Integer> _t) -> (Success<Integer>)_t))
+                            .thenAccept(_t ->
+                                    logger.info("result is "+_t.result()))
+            );
+        }
+    }
+
+    @Test
+    public void testRecover() {
+        {
+            Try<Integer> t = Try.success(1);
+            t.map(peek(r -> logger.info("map: "+r)))
+                    .recover(_t -> logger.error("recover: "+_t.getMessage(), t));
+        }
+        {
+            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            t.map(peek(r -> logger.info("map: "+r)))
+                    .recover(_t -> logger.error("recover: "+_t.getMessage(), _t));
+        }
+    }
+
+
+    public static <I> PartialConsumer<I> _case(Predicate<I> p) {
+        return PartialConsumer.fromPredicate(p);
+    }
+
+    public static <T,R extends T> PartialFunction<T,R> downcast(Function<T,R> f) {
+        return PartialFunction.fromPredicateAndFunction(i -> tryCatch(() -> {
+            f.apply(i);
+            return true;
+        }, t -> false), f);
+    }
+
+    public static <I,O> PartialFunction<I,O> _case(PartialFunction<I,O> pf) {
+        return pf;
+    }
+
+    public static <T> CompletableFuture<T> executeAsync(Callable<T> callable) {
         return executeAsync(callable, Executors.newSingleThreadExecutor());
     }
 
-    private <T> CompletableFuture<T> executeAsync(Callable<T> callable, ExecutorService executor) {
+    public static <T> CompletableFuture<T> executeAsync(Callable<T> callable, ExecutorService executor) {
         CompletableFuture<T> f = new CompletableFuture<>();
         executor.submit(() -> tryCatch(() -> {
             T result = callable.call();

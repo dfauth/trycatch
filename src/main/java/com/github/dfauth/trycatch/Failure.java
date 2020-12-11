@@ -1,6 +1,7 @@
 package com.github.dfauth.trycatch;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Failure<T> implements Try<T> {
@@ -17,7 +18,12 @@ public class Failure<T> implements Try<T> {
 
     @Override
     public <R> Try<R> map(Function<T, R> f) {
-        return new com.github.dfauth.trycatch.Failure<>(t);
+        return Try.failure(t);
+    }
+
+    @Override
+    public void recover(Consumer<Throwable> consumer) {
+        consumer.accept(t);
     }
 
     @Override

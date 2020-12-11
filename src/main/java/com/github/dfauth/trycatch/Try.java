@@ -1,40 +1,27 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.PartialConsumer;
+
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public interface Try<T> {
 
-    default void onComplete(BiConsumer<T,Throwable> fn) {
-        despatch(new DespatchHandler<T, Void>() {
-            @Override
-            public Void despatch(Failure<T> f) {
-                fn.accept(null, f.exception());
-                return null;
-            }
-
-            @Override
-            public Void despatch(Success<T> s) {
-                fn.accept(s.result(), null);
-                return null;
-            }
-        });
+    default void onComplete(PartialConsumer<Try<T>>... partials) {
+        Stream.of(partials).filter(p -> p.isDefinedAt(this)).map(p -> {
+            p.accept(this);
+            return p;
+        }).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
     }
+
+    void recover(Consumer<Throwable> consumer);
 
     <V> V despatch(DespatchHandler<T,V> handler);
-
-    default void onSuccess(Consumer<T> c) {
-        toOptional().ifPresent(c);
-    }
-
-    default void onFailure(Consumer<Throwable> c) {
-        onComplete((t,e) -> Optional.ofNullable(e).ifPresent(c));
-    }
 
     <R> Try<R> map(Function<T,R> f);
 

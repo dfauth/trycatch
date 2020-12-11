@@ -1,6 +1,7 @@
 package com.github.dfauth.trycatch;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Success<T> implements Try<T> {
@@ -9,6 +10,10 @@ public class Success<T> implements Try<T> {
 
     public Success(T t) {
         result = t;
+    }
+
+    @Override
+    public void recover(Consumer<Throwable> consumer) {
     }
 
     @Override
