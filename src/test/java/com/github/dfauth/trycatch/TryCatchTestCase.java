@@ -3,6 +3,7 @@ package com.github.dfauth.trycatch;
 import com.github.dfauth.partial.PartialConsumer;
 import com.github.dfauth.partial.PartialFunction;
 import com.github.dfauth.partial.PartialFunctions;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,11 @@ public class TryCatchTestCase {
     private static final Logger logger = LoggerFactory.getLogger(TryCatchTestCase.class);
     private RuntimeException runtimeOops = new RuntimeException("Oops");
     private Exception oops = new Exception("Oops");
+
+    @Before
+    public void setUp() {
+        resetLogEvents();
+    }
 
     @Test
     public void testTryCatch() {

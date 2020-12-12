@@ -9,6 +9,13 @@ import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public class AsyncUtil {
 
+    public static CompletableFuture<Void> executeAsync(ExceptionalRunnable runnable) {
+        return executeAsync(() -> {
+            tryCatch(runnable, t -> null);
+            return null;
+        }, Executors.newSingleThreadExecutor());
+    }
+
     public static <T> CompletableFuture<T> executeAsync(Callable<T> callable) {
         return executeAsync(callable, Executors.newSingleThreadExecutor());
     }

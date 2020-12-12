@@ -37,7 +37,7 @@ public class AssertingLogger implements LoggerFactoryBinder, ILoggerFactory {
         assertFalse(q.isEmpty());
         Call call = q.remove();
         assertTrue(call.isError());
-        assertTrue(call.argument(0).map(_t -> _t.equals(t.getMessage())).orElse(false));
+        assertTrue("Expected "+t.getMessage()+" but received "+call.argument(0).get(), call.argument(0).map(_t -> _t.equals(t.getMessage())).orElse(false));
         assertTrue(call.argument(1).map(_t -> _t.getClass() == t.getClass()).orElse(false));
     }
 
