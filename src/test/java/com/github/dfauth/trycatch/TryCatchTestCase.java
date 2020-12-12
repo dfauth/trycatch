@@ -15,9 +15,9 @@ import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
 
-public class TestCase {
+public class TryCatchTestCase {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestCase.class);
+    private static final Logger logger = LoggerFactory.getLogger(TryCatchTestCase.class);
     private RuntimeException runtimeOops = new RuntimeException("Oops");
     private Exception oops = new Exception("Oops");
 
@@ -196,34 +196,6 @@ public class TestCase {
             assertThrows(ArithmeticException.class, () -> {
                 result.toFailure().throwException();
             });
-            assertExceptionLogged(new ArithmeticException("/ by zero"));
-        }
-    }
-
-    @Test
-    public void testTryWithAsync() throws InterruptedException, ExecutionException, TimeoutException {
-
-        resetLogEvents();
-
-        {
-            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
-            Try<Integer> result = f.get(1, TimeUnit.SECONDS);
-            assertTrue(result.isSuccess());
-            assertEquals(2, result.toSuccess().result().intValue());
-            assertNothingLogged();
-        }
-
-        {
-            CompletableFuture<Integer> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> 2/i);
-            assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
-            assertNothingLogged(); // exception thrown outside of tryCatch
-        }
-
-        {
-            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
-            Try<Integer> result = f.get(1, TimeUnit.SECONDS);
-            assertTrue(result.isFailure());
-            assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
             assertExceptionLogged(new ArithmeticException("/ by zero"));
         }
     }
