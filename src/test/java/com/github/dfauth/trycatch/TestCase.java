@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.github.dfauth.partial.VoidFunction.peek;
+import static com.github.dfauth.trycatch.InterceptingLogger.*;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
@@ -18,6 +19,8 @@ import static org.junit.Assert.*;
 public class TestCase {
 
     private static final Logger logger = LoggerFactory.getLogger(TestCase.class);
+    private RuntimeException runtimeOops = new RuntimeException("Oops");
+    private Exception oops = new Exception("Oops");
 
     @Test
     public void testTryCatch() {
@@ -25,44 +28,50 @@ public class TestCase {
         // Runnable
         tryCatch(() -> {
         });
+        assertNothingLogged();
 
         // Callable
         assertEquals(1, tryCatch(() -> 1).intValue());
+        assertNothingLogged();
 
         // void return throws exception
         tryCatch(() -> Thread.sleep(100));
+        assertNothingLogged();
 
         // Runnable
         try {
             tryCatch(() -> {
-                throw new RuntimeException("Oops");
+                throw runtimeOops;
             });
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
+            assertExceptionLogged(runtimeOops);
         }
 
         // Callable
         try {
             tryCatch(() -> {
                 if (true) {
-                    throw new Exception("Oops");
+                    throw oops;
                 }
                 return 1;
             });
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
+            assertExceptionLogged(oops);
         }
 
         // void return throws exception
         try {
             tryCatch(() -> {
-                throw new Exception("Oops");
+                throw oops;
             });
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
+            assertExceptionLogged(oops);
         }
     }
 
@@ -70,15 +79,18 @@ public class TestCase {
     public void testTryCatchIgnore() {
 
         tryCatchIgnore(() -> {
-            throw new Exception("Oops");
+            throw oops;
         });
+        assertExceptionLogged(oops);
 
         tryCatchIgnore(() -> {
         });
+        assertNothingLogged();
 
         assertEquals(1, tryCatchIgnore(() -> {
-            throw new Exception("Oops");
+            throw oops;
         }, 1).intValue());
+        assertExceptionLogged(oops);
     }
 
     @Test
@@ -90,10 +102,11 @@ public class TestCase {
         // Callable
         String result = "result";
         assertEquals(result, Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> result)).get(1, TimeUnit.SECONDS));
+        assertNothingLogged();
 
         // ExceptionalRunnable
         Future<?> f = Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {
-            throw new Exception("Oops");
+            throw oops;
         }));
         try {
             f.get(1, TimeUnit.SECONDS);
@@ -107,6 +120,7 @@ public class TestCase {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
+        assertExceptionLogged(oops);
     }
 
     @Test
@@ -119,17 +133,19 @@ public class TestCase {
             assertNotNull(result);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toOptional().get().intValue());
+            assertNothingLogged();
         }
 
         {
             Try<Void> t = tryWith(() -> {
-                throw new RuntimeException("Oops");
+                throw runtimeOops;
             });
             assertNotNull(t);
             assertTrue(t.isFailure());
             Try<Integer> result = t.map(v -> 1);
             assertNotNull(result);
             assertTrue(result.isFailure());
+            assertExceptionLogged(runtimeOops);
         }
 
         {
@@ -141,6 +157,7 @@ public class TestCase {
             assertTrue(result.isFailure());
             assertTrue(result.toFailure().exception() instanceof ArithmeticException);
             assertEquals(result.toFailure().exception().getMessage(), "/ by zero");
+            assertExceptionLogged(new ArithmeticException("/ by zero"));
         }
     }
 
@@ -154,19 +171,20 @@ public class TestCase {
             assertNotNull(result);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
+            assertNothingLogged();
         }
 
         {
-            RuntimeException oops = new RuntimeException("Oops");
             Try<Integer> t = tryWith(() -> {
-                throw oops;
+                throw runtimeOops;
             });
             assertNotNull(t);
             assertTrue(t.isFailure());
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertEquals(oops, result.toFailure().exception());
+            assertEquals(runtimeOops, result.toFailure().exception());
+            assertExceptionLogged(runtimeOops);
         }
 
         {
@@ -179,22 +197,27 @@ public class TestCase {
             assertThrows(ArithmeticException.class, () -> {
                 result.toFailure().throwException();
             });
+            assertExceptionLogged(new ArithmeticException("/ by zero"));
         }
     }
 
     @Test
     public void testTryWithAsync() throws InterruptedException, ExecutionException, TimeoutException {
 
+        resetLogEvents();
+
         {
             CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
+            assertNothingLogged();
         }
 
         {
             CompletableFuture<Integer> f = executeAsync(() -> 0).thenApply(i -> 2/i);
             assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
+            assertNothingLogged(); // exception thrown outside of tryCatch
         }
 
         {
@@ -202,6 +225,7 @@ public class TestCase {
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isFailure());
             assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
+            assertExceptionLogged(new ArithmeticException("/ by zero"));
         }
     }
 
@@ -213,35 +237,48 @@ public class TestCase {
                     _case((Try<Integer> _t) -> t.isSuccess())
                             .thenAccept(_t -> logger.info("t is success")),
                     _case((Try<Integer> _t) -> t.isFailure())
-                            .thenAccept(_t -> logger.info("t is failu7re"))
+                            .thenAccept(_t -> logger.info("t is failure"))
             );
+            assertInfoLogged("t is success");
         }
         {
-            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            Try<Integer> t = tryWith(() -> {
+                throw runtimeOops;
+            });
             t.onComplete(
                     _case((Try<Integer> _t) -> _t.isSuccess())
-                            .thenAccept(_t -> logger.info(_t+" is success")),
+                            .thenAccept(_t -> logger.info("_t is success")),
                     _case((Try<Integer> _t) -> _t.isFailure())
-                            .thenAccept(_t -> logger.info(_t+" is failu7re"))
+                            .thenAccept(_t -> logger.info("_t is failure"))
             );
+            assertExceptionLogged(runtimeOops);
+            assertInfoLogged("_t is failure");
         }
         {
-            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            Try<Integer> t = tryWith(() -> {
+                throw runtimeOops;
+            });
             t.onComplete(
                     _case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
                     .otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
+            assertExceptionLogged(runtimeOops);
+            assertInfoLogged(msg -> msg.startsWith("otherwise("));
         }
         {
-            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            Try<Integer> t = tryWith(() -> {
+                throw runtimeOops;
+            });
             t.onComplete(
                     _case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
                     _case((Try<Integer> _t) -> _t.isFailure())
-                            .thenAccept(_t -> logger.info(_t+" is failu7re"))
+                            .thenAccept(_t -> logger.info(_t+" is failure"))
                     .otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
+            assertExceptionLogged(runtimeOops);
+            assertInfoLogged(msg -> msg.endsWith(" is failure"));
         }
         {
             Try<Integer> t = Try.success(1);
@@ -250,6 +287,7 @@ public class TestCase {
                             .thenAccept(_t ->
                                     logger.info("result is "+_t.result()))
             );
+            assertInfoLogged(msg -> msg.startsWith("result is"));
         }
     }
 
@@ -259,11 +297,16 @@ public class TestCase {
             Try<Integer> t = Try.success(1);
             t.map(peek(r -> logger.info("map: "+r)))
                     .recover(_t -> logger.error("recover: "+_t.getMessage(), t));
+            assertInfoLogged(msg -> msg.startsWith("map: "));
         }
         {
-            Try<Integer> t = Try.failure(new RuntimeException("Oops"));
+            Try<Integer> t = tryWith(() -> {
+                throw runtimeOops;
+            });
             t.map(peek(r -> logger.info("map: "+r)))
-                    .recover(_t -> logger.error("recover: "+_t.getMessage(), _t));
+                    .recover(_t -> logger.info("recover: "+_t.getMessage()));
+            assertExceptionLogged(runtimeOops);
+            assertInfoLogged(msg -> msg.startsWith("recover: "));
         }
     }
 
