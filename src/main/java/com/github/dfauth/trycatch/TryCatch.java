@@ -60,10 +60,10 @@ public class TryCatch {
     }
 
     public static Runnable withExceptionLogging(ExceptionalRunnable r) {
-        return () -> tryCatch(() -> r.run());
+        return () -> tryCatch(r);
     }
 
     public static <T> Callable<T> withExceptionLogging(Callable<T> c) {
-        return () -> tryCatch((Callable<T>)() -> c.call());
+        return () -> tryCatch(c);
     }
 }
