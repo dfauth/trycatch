@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.github.dfauth.trycatch.AssertingLogger.*;
+import static com.github.dfauth.trycatch.AsyncUtil.executeAsync;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.withExceptionLogging;
 import static org.junit.Assert.*;
@@ -33,7 +34,7 @@ public class AsyncTestCase {
     public void testCallable() throws InterruptedException, ExecutionException, TimeoutException {
 
         {
-            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
@@ -41,13 +42,13 @@ public class AsyncTestCase {
         }
 
         {
-            CompletableFuture<Integer> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> 2/i);
+            CompletableFuture<Integer> f = executeAsync(() -> 0).thenApply(i -> 2/i);
             assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
             assertNothingLogged(); // exception thrown outside of tryCatch
         }
 
         {
-            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isFailure());
             assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
@@ -59,14 +60,14 @@ public class AsyncTestCase {
     public void testRunnable() throws InterruptedException, ExecutionException, TimeoutException {
 
         {
-            CompletableFuture<Void> f = AsyncUtil.executeAsync(() -> {});
+            CompletableFuture<Void> f = executeAsync(() -> {});
             Void result = f.get(1, TimeUnit.SECONDS);
             assertNothingLogged();
         }
 
         {
             AtomicReference<Optional<Integer>> blah = new AtomicReference<>();
-            CompletableFuture<Void> f = AsyncUtil.executeAsync(() -> {
+            CompletableFuture<Void> f = executeAsync(() -> {
                 blah.set(Optional.ofNullable(1));
             }).thenAccept(withExceptionLogging((Consumer<Void>) _void -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
             assertEquals(2, blah.get().get().intValue());
@@ -75,7 +76,7 @@ public class AsyncTestCase {
 
         {
             AtomicReference<Optional<Integer>> blah = new AtomicReference<>();
-            CompletableFuture<Void> f = AsyncUtil.executeAsync(() -> {
+            CompletableFuture<Void> f = executeAsync(() -> {
                 blah.set(Optional.ofNullable(0));
             }).thenAccept(withExceptionLogging((Consumer<Void>) _void -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
             assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
