@@ -6,6 +6,10 @@ import java.util.stream.Stream;
 
 public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
 
+    static <I> PartialConsumer<I> _case(Predicate<I> p) {
+        return fromPredicate(p);
+    }
+
     default <T extends I> boolean isDefinedAt(T i) {
         return test(i);
     }

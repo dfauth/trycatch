@@ -7,7 +7,7 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.status.StatusUtil;
 import ch.qos.logback.core.util.StatusPrinter;
-import com.github.dfauth.trycatch.InterceptingLogger;
+import com.github.dfauth.trycatch.AssertingLogger;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.helpers.Util;
 import org.slf4j.spi.LoggerFactoryBinder;
@@ -77,11 +77,11 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
 
     @Override
     public ILoggerFactory getLoggerFactory() {
-        return new InterceptingLogger();
+        return new AssertingLogger();
     }
 
     @Override
     public String getLoggerFactoryClassStr() {
-        return InterceptingLogger.class.getName();
+        return AssertingLogger.class.getName();
     }
 }

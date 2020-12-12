@@ -2,16 +2,15 @@ package com.github.dfauth.trycatch;
 
 import com.github.dfauth.partial.PartialConsumer;
 import com.github.dfauth.partial.PartialFunction;
+import com.github.dfauth.partial.PartialFunctions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static com.github.dfauth.partial.VoidFunction.peek;
-import static com.github.dfauth.trycatch.InterceptingLogger.*;
+import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
@@ -207,7 +206,7 @@ public class TestCase {
         resetLogEvents();
 
         {
-            CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
@@ -215,13 +214,13 @@ public class TestCase {
         }
 
         {
-            CompletableFuture<Integer> f = executeAsync(() -> 0).thenApply(i -> 2/i);
+            CompletableFuture<Integer> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> 2/i);
             assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
             assertNothingLogged(); // exception thrown outside of tryCatch
         }
 
         {
-            CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = AsyncUtil.executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isFailure());
             assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
@@ -234,9 +233,9 @@ public class TestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    _case((Try<Integer> _t) -> t.isSuccess())
+                    PartialConsumer._case((Try<Integer> _t) -> t.isSuccess())
                             .thenAccept(_t -> logger.info("t is success")),
-                    _case((Try<Integer> _t) -> t.isFailure())
+                    PartialConsumer._case((Try<Integer> _t) -> t.isFailure())
                             .thenAccept(_t -> logger.info("t is failure"))
             );
             assertInfoLogged("t is success");
@@ -246,9 +245,9 @@ public class TestCase {
                 throw runtimeOops;
             });
             t.onComplete(
-                    _case((Try<Integer> _t) -> _t.isSuccess())
+                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info("_t is success")),
-                    _case((Try<Integer> _t) -> _t.isFailure())
+                    PartialConsumer._case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info("_t is failure"))
             );
             assertExceptionLogged(runtimeOops);
@@ -259,7 +258,7 @@ public class TestCase {
                 throw runtimeOops;
             });
             t.onComplete(
-                    _case((Try<Integer> _t) -> _t.isSuccess())
+                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
                     .otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
@@ -271,9 +270,9 @@ public class TestCase {
                 throw runtimeOops;
             });
             t.onComplete(
-                    _case((Try<Integer> _t) -> _t.isSuccess())
+                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
-                    _case((Try<Integer> _t) -> _t.isFailure())
+                    PartialConsumer._case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info(_t+" is failure"))
                     .otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
@@ -283,7 +282,7 @@ public class TestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    _case(downcast((Try<Integer> _t) -> (Success<Integer>)_t))
+                    PartialFunction._case(PartialFunctions.downcast((Try<Integer> _t) -> (Success<Integer>)_t))
                             .thenAccept(_t ->
                                     logger.info("result is "+_t.result()))
             );
@@ -310,34 +309,5 @@ public class TestCase {
         }
     }
 
-
-    public static <I> PartialConsumer<I> _case(Predicate<I> p) {
-        return PartialConsumer.fromPredicate(p);
-    }
-
-    public static <T,R extends T> PartialFunction<T,R> downcast(Function<T,R> f) {
-        return PartialFunction.fromPredicateAndFunction(i -> tryCatch(() -> {
-            f.apply(i);
-            return true;
-        }, t -> false), f);
-    }
-
-    public static <I,O> PartialFunction<I,O> _case(PartialFunction<I,O> pf) {
-        return pf;
-    }
-
-    public static <T> CompletableFuture<T> executeAsync(Callable<T> callable) {
-        return executeAsync(callable, Executors.newSingleThreadExecutor());
-    }
-
-    public static <T> CompletableFuture<T> executeAsync(Callable<T> callable, ExecutorService executor) {
-        CompletableFuture<T> f = new CompletableFuture<>();
-        executor.submit(() -> tryCatch(() -> {
-            T result = callable.call();
-            f.complete(result);
-            return result;
-        }, t -> f.completeExceptionally(t)));
-        return f;
-    }
 
 }

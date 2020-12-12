@@ -8,6 +8,10 @@ import java.util.stream.Stream;
 
 public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
 
+    static <I,O> PartialFunction<I,O> _case(PartialFunction<I, O> pf) {
+        return pf;
+    }
+
     default <T extends I> boolean isDefinedAt(T i) {
         return test(i);
     }

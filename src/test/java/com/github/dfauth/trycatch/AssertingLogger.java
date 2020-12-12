@@ -13,12 +13,12 @@ import java.util.function.Predicate;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class InterceptingLogger implements LoggerFactoryBinder, ILoggerFactory {
+public class AssertingLogger implements LoggerFactoryBinder, ILoggerFactory {
 
     private static Queue<Call> q = new ArrayDeque<>();
 
     public static <T> Logger of(Logger delegate) {
-        return (Logger) Proxy.newProxyInstance(InterceptingLogger.class.getClassLoader(), new Class[]{Logger.class}, (proxy, method, args) -> {
+        return (Logger) Proxy.newProxyInstance(AssertingLogger.class.getClassLoader(), new Class[]{Logger.class}, (proxy, method, args) -> {
             q.offer(Call.of(method.getName(), args));
             method.invoke(delegate, args);
             return null;
@@ -64,7 +64,7 @@ public class InterceptingLogger implements LoggerFactoryBinder, ILoggerFactory {
 
     @Override
     public Logger getLogger(String name) {
-        return (Logger) Proxy.newProxyInstance(InterceptingLogger.class.getClassLoader(), new Class[]{Logger.class}, (proxy, method, args) -> {
+        return (Logger) Proxy.newProxyInstance(AssertingLogger.class.getClassLoader(), new Class[]{Logger.class}, (proxy, method, args) -> {
             q.offer(Call.of(method.getName(), args));
             return null;
         });
