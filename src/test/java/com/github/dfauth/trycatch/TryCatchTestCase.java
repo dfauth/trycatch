@@ -8,10 +8,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.github.dfauth.partial.VoidFunction.peek;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
+import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
@@ -19,8 +21,16 @@ import static org.junit.Assert.*;
 public class TryCatchTestCase {
 
     private static final Logger logger = LoggerFactory.getLogger(TryCatchTestCase.class);
-    private RuntimeException runtimeOops = new RuntimeException("Oops");
-    private Exception oops = new Exception("Oops");
+    private static RuntimeException runtimeOops = new RuntimeException("Oops");
+    private static Exception oops = new Exception("Oops");
+
+    private <T> T throwRuntimeOops() {
+        throw runtimeOops;
+    }
+
+    private <T> T throwOops() throws Exception {
+        throw oops;
+    }
 
     @Before
     public void setUp() {
@@ -45,9 +55,7 @@ public class TryCatchTestCase {
 
         // Runnable
         try {
-            tryCatch(() -> {
-                throw runtimeOops;
-            });
+            tryCatch(() -> throwRuntimeOops());
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
@@ -56,12 +64,7 @@ public class TryCatchTestCase {
 
         // Callable
         try {
-            tryCatch(() -> {
-                if (true) {
-                    throw oops;
-                }
-                return 1;
-            });
+            tryCatch(() -> true ? throwOops(): null);
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
@@ -70,9 +73,7 @@ public class TryCatchTestCase {
 
         // void return throws exception
         try {
-            tryCatch(() -> {
-                throw oops;
-            });
+            tryCatch(() -> throwOops());
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
             // expected;
@@ -83,18 +84,14 @@ public class TryCatchTestCase {
     @Test
     public void testTryCatchIgnore() {
 
-        tryCatchIgnore(() -> {
-            throw oops;
-        });
+        tryCatchIgnore(() -> throwOops());
         assertExceptionLogged(oops);
 
         tryCatchIgnore(() -> {
         });
         assertNothingLogged();
 
-        assertEquals(1, tryCatchIgnore(() -> {
-            throw oops;
-        }, 1).intValue());
+        assertEquals(1, tryCatchIgnore(() -> throwOops(), 1).intValue());
         assertExceptionLogged(oops);
     }
 
@@ -126,6 +123,50 @@ public class TryCatchTestCase {
             throw new RuntimeException(e);
         }
         assertExceptionLogged(oops);
+
+        // CallableFunction
+        CallableFunction<CompletableFuture<String>, String> g = (CompletableFuture<String> _f) -> _f.get(1, TimeUnit.SECONDS);
+        {
+            assertEquals(result, Optional.of(CompletableFuture.completedFuture(result)).map(withExceptionLogging(g)).get());
+            assertNothingLogged();
+        }
+        {
+            assertTrue(tryWith(() -> Optional.of(CompletableFuture.<String>failedFuture(oops)).map(withExceptionLogging(g)).get()).isFailure());
+            assertExceptionLogged(new ExecutionException(oops));
+            assertExceptionLogged(new RuntimeException(new ExecutionException(oops))); // TODO why?
+            assertExceptionLogged(new RuntimeException(new RuntimeException(new ExecutionException(oops)))); // TODO why?
+            assertNothingLogged();
+        }
+
+        // ExceptionalConsumer
+        {
+            assertTrue(tryWith(() -> Optional.of(CompletableFuture.completedFuture(result)).ifPresent(toConsumer(_f -> _f.get(1, TimeUnit.SECONDS)))).isSuccess());
+            assertNothingLogged();
+        }
+        {
+            assertTrue(tryWith(() -> Optional.of(CompletableFuture.failedFuture(oops)).ifPresent(toConsumer(_f -> _f.get(1, TimeUnit.SECONDS)))).isSuccess());
+            assertExceptionLogged(new ExecutionException(oops));
+            assertNothingLogged();
+        }
+
+    }
+
+    @Test
+    public void testTheIgnorant() {
+
+        // Runnable
+
+        // Callable
+
+        // ExceptionalRunnable
+
+        // CallableFunction
+        CallableFunction<CompletableFuture<String>, String> g = (CompletableFuture<String> _f) -> _f.get(1, TimeUnit.SECONDS);
+        {
+            assertEquals("oops", Optional.of(CompletableFuture.<String>failedFuture(oops)).map(ignorantCallableFunction(g, "oops")).get());
+            assertExceptionLogged(new ExecutionException(oops));
+        }
+
     }
 
     @Test
@@ -151,6 +192,8 @@ public class TryCatchTestCase {
             assertNotNull(result);
             assertTrue(result.isFailure());
             assertExceptionLogged(runtimeOops);
+            assertExceptionLogged(new RuntimeException(runtimeOops)); // TODO why?
+            assertNothingLogged();
         }
 
         {
@@ -180,9 +223,7 @@ public class TryCatchTestCase {
         }
 
         {
-            Try<Integer> t = tryWith(() -> {
-                throw runtimeOops;
-            });
+            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
             assertNotNull(t);
             assertTrue(t.isFailure());
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
@@ -219,9 +260,7 @@ public class TryCatchTestCase {
             assertInfoLogged("t is success");
         }
         {
-            Try<Integer> t = tryWith(() -> {
-                throw runtimeOops;
-            });
+            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info("_t is success")),
@@ -232,9 +271,7 @@ public class TryCatchTestCase {
             assertInfoLogged("_t is failure");
         }
         {
-            Try<Integer> t = tryWith(() -> {
-                throw runtimeOops;
-            });
+            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
@@ -244,9 +281,7 @@ public class TryCatchTestCase {
             assertInfoLogged(msg -> msg.startsWith("otherwise("));
         }
         {
-            Try<Integer> t = tryWith(() -> {
-                throw runtimeOops;
-            });
+            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
@@ -277,9 +312,7 @@ public class TryCatchTestCase {
             assertInfoLogged(msg -> msg.startsWith("map: "));
         }
         {
-            Try<Integer> t = tryWith(() -> {
-                throw runtimeOops;
-            });
+            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
             t.map(peek(r -> logger.info("map: "+r)))
                     .recover(_t -> logger.info("recover: "+_t.getMessage()));
             assertExceptionLogged(runtimeOops);

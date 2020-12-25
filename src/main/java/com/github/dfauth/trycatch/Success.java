@@ -23,7 +23,9 @@ public class Success<T> implements Try<T> {
 
     @Override
     public <R> Try<R> map(Function<T, R> f) {
-        return Try.tryWith(() -> f.apply(result));
+        return Try.tryWith(() -> {
+            return f.apply(result);
+        });
     }
 
     @Override

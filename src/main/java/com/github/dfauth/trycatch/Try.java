@@ -33,6 +33,13 @@ public interface Try<T> {
         return tryCatch(() -> new Success<>(c.call()), Failure::new);
     }
 
+    static Try<Void> tryWith(ExceptionalRunnable r) {
+        return tryCatch(() -> {
+            r.run();
+            return new Success<>(null);
+        }, Failure::new);
+    }
+
     boolean isFailure();
 
     boolean isSuccess();

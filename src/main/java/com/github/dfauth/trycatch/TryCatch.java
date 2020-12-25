@@ -55,8 +55,28 @@ public class TryCatch {
         return i -> tryCatch(() -> c.accept(i));
     }
 
-    public static <I,O> Function<I,O> withExceptionLogging(Function<I,O> f) {
-        return i -> tryCatch((Callable<O>) () -> f.apply(i));
+    public static <T> Callable<T> ignorantCallable(Callable<T> c, T defaultValue) {
+        return () -> tryCatchIgnore(() -> c.call(), defaultValue);
+    }
+
+    public static <I> Consumer<I> ignorantConsumer(Consumer<I> c) {
+        return i -> tryCatchIgnore(() -> c.accept(i));
+    }
+
+    public static Runnable ignorantRunnable(ExceptionalRunnable r) {
+        return () -> tryCatchIgnore(r);
+    }
+
+    public static <I,O> Function<I,O> ignorantCallableFunction(CallableFunction<I,O> f, O defaultValue) {
+        return i -> tryCatchIgnore(f.apply(i), defaultValue);
+    }
+
+    public static <T> Consumer<T> withExceptionLogging(ExceptionalConsumer<T> c) {
+        return i -> tryCatch(() -> c.accept(i));
+    }
+
+    public static <I,O> Function<I,O> withExceptionLogging(CallableFunction<I,O> f) {
+        return i -> tryCatch(f.apply(i));
     }
 
     public static Runnable withExceptionLogging(ExceptionalRunnable r) {
