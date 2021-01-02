@@ -172,7 +172,7 @@ public class TryCatchTestCase {
     @Test
     public void testTryWith() {
         {
-            Try<Integer> t = tryWith(() -> 1);
+            Try<Integer> t = Try.tryWithCallable(() -> 1);
             assertNotNull(t);
             assertTrue(t.isSuccess());
             Try<Integer> result = t.map(v -> 2*v);
@@ -197,7 +197,7 @@ public class TryCatchTestCase {
         }
 
         {
-            Try<Integer> t = tryWith(() -> 0);
+            Try<Integer> t = Try.tryWithCallable(() -> 0);
             assertNotNull(t);
             assertTrue(t.isSuccess());
             Try<Integer> result = t.map(v -> 1/v);
@@ -212,10 +212,10 @@ public class TryCatchTestCase {
     @Test
     public void testFlatMap() {
         {
-            Try<Integer> t = tryWith(() -> 1);
+            Try<Integer> t = Try.tryWithCallable(() -> 1);
             assertNotNull(t);
             assertTrue(t.isSuccess());
-            Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
+            Try<Integer> result = t.flatMap(v -> Try.tryWithCallable(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
@@ -223,10 +223,10 @@ public class TryCatchTestCase {
         }
 
         {
-            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
+            Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             assertNotNull(t);
             assertTrue(t.isFailure());
-            Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
+            Try<Integer> result = t.flatMap(v -> Try.tryWithCallable(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
             assertEquals(runtimeOops, result.toFailure().exception());
@@ -234,10 +234,10 @@ public class TryCatchTestCase {
         }
 
         {
-            Try<Integer> t = tryWith(() -> 0);
+            Try<Integer> t = Try.tryWithCallable(() -> 0);
             assertNotNull(t);
             assertTrue(t.isSuccess());
-            Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
+            Try<Integer> result = t.flatMap(v -> Try.tryWithCallable(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
             assertThrows(ArithmeticException.class, () -> {
@@ -260,7 +260,7 @@ public class TryCatchTestCase {
             assertInfoLogged("t is success");
         }
         {
-            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
+            Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info("_t is success")),
@@ -271,7 +271,7 @@ public class TryCatchTestCase {
             assertInfoLogged("_t is failure");
         }
         {
-            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
+            Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
@@ -281,7 +281,7 @@ public class TryCatchTestCase {
             assertInfoLogged(msg -> msg.startsWith("otherwise("));
         }
         {
-            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
+            Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
@@ -312,7 +312,7 @@ public class TryCatchTestCase {
             assertInfoLogged(msg -> msg.startsWith("map: "));
         }
         {
-            Try<Integer> t = tryWith(() -> true ? throwRuntimeOops() : null);
+            Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.map(peek(r -> logger.info("map: "+r)))
                     .recover(_t -> logger.info("recover: "+_t.getMessage()));
             assertExceptionLogged(runtimeOops);

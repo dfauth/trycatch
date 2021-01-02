@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 
 import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.AsyncUtil.executeAsync;
-import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.withExceptionLogging;
 import static org.junit.Assert.*;
 
@@ -34,7 +33,7 @@ public class AsyncTestCase {
     public void testCallable() throws InterruptedException, ExecutionException, TimeoutException {
 
         {
-            CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> Try.tryWithCallable(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isSuccess());
             assertEquals(2, result.toSuccess().result().intValue());
@@ -48,7 +47,7 @@ public class AsyncTestCase {
         }
 
         {
-            CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
+            CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> Try.tryWithCallable(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isFailure());
             assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());

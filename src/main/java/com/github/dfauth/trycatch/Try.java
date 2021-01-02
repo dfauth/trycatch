@@ -29,7 +29,7 @@ public interface Try<T> {
 
     Optional<T> toOptional();
 
-    static <T> Try<T> tryWith(Callable<T> c) {
+    static <T> Try<T> tryWithCallable(Callable<T> c) {
         return tryCatch(() -> new Success<>(c.call()), Failure::new);
     }
 

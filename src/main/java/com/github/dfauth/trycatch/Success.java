@@ -23,7 +23,7 @@ public class Success<T> implements Try<T> {
 
     @Override
     public <R> Try<R> map(Function<T, R> f) {
-        return Try.tryWith(() -> {
+        return Try.tryWithCallable(() -> {
             return f.apply(result);
         });
     }
