@@ -6,37 +6,46 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
-import static com.github.dfauth.trycatch.ThrowableHandler.noOp;
+import static com.github.dfauth.partial.VoidFunction.peek;
+import static com.github.dfauth.trycatch.ThrowableHandlers.consume;
+import static com.github.dfauth.trycatch.ThrowableHandlers.noOp;
 
 public class TryCatch {
 
     private static final Logger logger = LoggerFactory.getLogger(TryCatch.class);
 
-    public static <T> ThrowableHandler<T> propagationHandler() {
-        return t -> {
+    public static UnaryOperator<Throwable> loggingOperator = peek(t -> logger.error(t.getMessage(), t));
+
+    public static Function<Throwable,Void> propagationHandler = t -> {
+            throw new RuntimeException(t);
+    };
+
+    public static <T> Function<Throwable,T> propagationHandler() {
+        return  t -> {
             throw new RuntimeException(t);
         };
     }
+
     private static Runnable noOpFinalRunnable = () -> {};
 
     public static void tryCatch(ExceptionalRunnable r) {
-        tryCatch(r, propagationHandler(), noOpFinalRunnable);
+        tryCatch(r, loggingOperator.andThen(propagationHandler), noOpFinalRunnable);
     }
 
     public static <T> T tryCatch(Callable<T> c) {
-        return tryCatch(c, propagationHandler(), noOpFinalRunnable);
+        return tryCatch(c, loggingOperator.andThen(propagationHandler()), noOpFinalRunnable);
     }
 
-    public static <T> T tryCatch(Callable<T> c, ThrowableHandler<T> handler) {
-        return tryCatch(c, handler, noOpFinalRunnable);
+    public static <T> T tryCatch(Callable<T> c, Function<Throwable,T> handler) {
+        return tryCatch(c, loggingOperator.andThen(handler), noOpFinalRunnable);
     }
 
-    public static <T> T tryCatch(Callable<T> c, ThrowableHandler<T> handler, Runnable finalRunnable) {
+    public static <T> T tryCatch(Callable<T> c, Function<Throwable,T> handler, Runnable finalRunnable) {
         try {
             return c.call();
         } catch (Throwable t) {
-            logger.error(t.getMessage(), t);
             return handler.apply(t);
         } finally {
             finalRunnable.run();
@@ -44,10 +53,26 @@ public class TryCatch {
     }
 
     public static void tryCatchIgnore(ExceptionalRunnable r) {
-        tryCatch(r, noOp(), noOpFinalRunnable);
+        tryCatch(r, loggingOperator.andThen(noOp()), noOpFinalRunnable);
+    }
+
+    public static void tryCatchIgnore(ExceptionalRunnable r, Consumer<Throwable> c) {
+        tryCatch(r, loggingOperator.andThen(consume(c)), noOpFinalRunnable);
     }
 
     public static <T> T tryCatchIgnore(Callable<T> c, T defaultValueOfT) {
+        return tryCatch(c, loggingOperator.andThen(t -> defaultValueOfT), noOpFinalRunnable);
+    }
+
+    public static void tryCatchSilentlyIgnore(ExceptionalRunnable r) {
+        tryCatch(r, noOp(), noOpFinalRunnable);
+    }
+
+    public static void tryCatchSilentlyIgnore(ExceptionalRunnable r, Consumer<Throwable> c) {
+        tryCatch(r, consume(c), noOpFinalRunnable);
+    }
+
+    public static <T> T tryCatchSilentlyIgnore(Callable<T> c, T defaultValueOfT) {
         return tryCatch(c, t -> defaultValueOfT, noOpFinalRunnable);
     }
 

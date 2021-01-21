@@ -14,7 +14,7 @@ public interface CallableFunction<T,R> extends Function<T, Callable<R>> {
 
     R _apply(T t) throws Exception;
 
-    static <T,R> Function<T,R> toFunction(CallableFunction<T,R> f, ThrowableHandler<R> g) {
+    static <T,R> Function<T,R> toFunction(CallableFunction<T,R> f, Function<Throwable,R> g) {
         return _t -> tryCatch(f.apply(_t), g);
     }
 }
