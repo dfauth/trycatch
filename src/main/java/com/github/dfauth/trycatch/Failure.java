@@ -22,8 +22,14 @@ public class Failure<T> implements Try<T> {
     }
 
     @Override
-    public void recover(Consumer<Throwable> consumer) {
+    public Try<T> recover(Function<Throwable, T> f) {
+        return new Success<>(f.apply(this.t));
+    }
+
+    @Override
+    public Try<T> recover(Consumer<Throwable> consumer) {
         consumer.accept(t);
+        return this;
     }
 
     @Override

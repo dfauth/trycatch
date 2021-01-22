@@ -4,6 +4,7 @@ import com.github.dfauth.partial.PartialConsumer;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -19,11 +20,21 @@ public interface Try<T> {
         }).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
     }
 
-    void recover(Consumer<Throwable> consumer);
+    default Try<T> recover(Function<Throwable,T> f) {
+        return this;
+    }
+
+    default Try<T> recover(Consumer<Throwable> c) {
+        return this;
+    }
 
     <V> V despatch(DespatchHandler<T,V> handler);
 
     <R> Try<R> map(Function<T,R> f);
+
+    default Try<T> accept(Consumer<T> c) {
+        return this;
+    }
 
     <R> Try<R> flatMap(Function<T,Try<R>> f);
 
@@ -38,6 +49,15 @@ public interface Try<T> {
             r.run();
             return new Success<>(null);
         }, Failure::new);
+    }
+
+    static <T> BiFunction<T,Throwable,Try<T>> tryWith() {
+        return (t,e) ->
+                t != null ?
+                        new Success<>(t) :
+                        e != null ?
+                                new Failure<>(e) :
+                                new Failure<>(new UnsupportedOperationException());
     }
 
     boolean isFailure();
@@ -70,7 +90,7 @@ public interface Try<T> {
 
             @Override
             public Failure<T> despatch(Success<T> s) {
-                throw new IllegalStateException("Oops");
+                throw new UnsupportedOperationException();
             }
         });
     }
@@ -80,7 +100,7 @@ public interface Try<T> {
         return t.despatch(new DespatchHandler<>() {
             @Override
             public Success<T> despatch(Failure<T> f) {
-                throw new IllegalStateException("Oops");
+                throw new UnsupportedOperationException();
             }
 
             @Override

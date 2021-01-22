@@ -308,13 +308,17 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.map(peek(r -> logger.info("map: "+r)))
-                    .recover(_t -> logger.error("recover: "+_t.getMessage(), t));
+                    .recover(_t -> {
+                        logger.error("recover: "+_t.getMessage(), t);
+                    });
             assertInfoLogged(msg -> msg.startsWith("map: "));
         }
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.map(peek(r -> logger.info("map: "+r)))
-                    .recover(_t -> logger.info("recover: "+_t.getMessage()));
+                    .recover(_t -> {
+                        logger.info("recover: "+_t.getMessage());
+                    });
             assertExceptionLogged(runtimeOops);
             assertInfoLogged(msg -> msg.startsWith("recover: "));
         }
