@@ -10,6 +10,10 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
         return fromPredicate(p);
     }
 
+    static <I> PartialConsumer<I> _case(Predicate<I> p, Consumer<I> c) {
+        return fromPredicateAndConsumer(p, c);
+    }
+
     default <T extends I> boolean isDefinedAt(T i) {
         return test(i);
     }
@@ -53,17 +57,7 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
     }
 
     default Tuple2<Predicate<I>, Consumer<I>> decompose() {
-        return new Tuple2<>(){
-            @Override
-            public Predicate<I> _1() {
-                return i -> PartialConsumer.this.test(i);
-            }
-
-            @Override
-            public Consumer<I> _2() {
-                return i -> PartialConsumer.this.accept(i);
-            }
-        };
+        return Tuple2.of(i -> PartialConsumer.this.test(i),i -> PartialConsumer.this.accept(i));
     }
 
     default PartialConsumer<I> thenAccept(Consumer<I> c) {

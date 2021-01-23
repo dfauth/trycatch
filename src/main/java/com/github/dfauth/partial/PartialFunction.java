@@ -12,6 +12,10 @@ public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
         return pf;
     }
 
+    static <I,O> PartialFunction<I,O> _case(Predicate<I> p, Function<I,O> f) {
+        return fromPredicateAndFunction(p,f);
+    }
+
     default <T extends I> boolean isDefinedAt(T i) {
         return test(i);
     }
@@ -63,17 +67,7 @@ public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
     }
 
     default Tuple2<Predicate<I>, Function<I,O>> decompose() {
-        return new Tuple2<>(){
-            @Override
-            public Predicate<I> _1() {
-                return i -> PartialFunction.this.test(i);
-            }
-
-            @Override
-            public Function<I,O> _2() {
-                return i -> PartialFunction.this.apply(i);
-            }
-        };
+        return Tuple2.of(i -> PartialFunction.this.test(i),i -> PartialFunction.this.apply(i));
     }
 
     default PartialConsumer<I> thenAccept(Consumer<O> c) {

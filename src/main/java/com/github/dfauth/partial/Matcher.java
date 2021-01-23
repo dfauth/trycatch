@@ -19,4 +19,8 @@ public class Matcher<T> {
         return Stream.of(cases).filter(p -> p.isDefinedAt(this.target)).map(p -> p.apply(this.target)).findFirst();
     }
 
+    public void using(PartialConsumer<T>... cases) {
+        Stream.of(cases).filter(p -> p.isDefinedAt(this.target)).findFirst().ifPresent(p -> p.accept(this.target));
+    }
+
 }
