@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.github.dfauth.trycatch.TryCatch.tryCatch;
+import static com.github.dfauth.trycatch.TryCatch.*;
 
 public interface Try<T> {
 
@@ -41,7 +41,11 @@ public interface Try<T> {
     Optional<T> toOptional();
 
     static <T> Try<T> tryWithCallable(Callable<T> c) {
-        return tryCatch(() -> new Success<>(c.call()), Failure::new);
+        return tryCatch(() -> new Success<>(c.call()), loggingOperator.andThen(Failure::new), noOpFinalRunnable);
+    }
+
+    static <T> Try<T> trySilentlyWithCallable(Callable<T> c) {
+        return tryCatch(() -> new Success<>(c.call()), Failure::new, noOpFinalRunnable);
     }
 
     static Try<Void> tryWith(ExceptionalRunnable r) {

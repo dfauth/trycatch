@@ -28,7 +28,7 @@ public class TryCatch {
         };
     }
 
-    private static Runnable noOpFinalRunnable = () -> {};
+    public static Runnable noOpFinalRunnable = () -> {};
 
     public static void tryCatch(ExceptionalRunnable r) {
         tryCatch(r, loggingOperator.andThen(propagationHandler), noOpFinalRunnable);
