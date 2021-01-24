@@ -19,7 +19,7 @@ public class Lists {
         return l.subList(1,l.size()-1);
     }
 
-    public static final <T> Tuple2<T,List<T>> partition(List<T> l) {
+    public static final <T> Tuple2<T,List<T>> segment(List<T> l) {
         return Tuple2.of(head(l), tail(l));
     }
 

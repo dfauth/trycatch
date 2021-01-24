@@ -16,8 +16,8 @@ public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
         return fromPredicateAndFunction(p,f);
     }
 
-    default <T extends I> boolean isDefinedAt(T i) {
-        return test(i);
+    default <T extends I> boolean isDefinedAt(T t) {
+        return test(t);
     }
 
     default <U> PartialFunction<I, U> thenMap(Function<O, U> f) {

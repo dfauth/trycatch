@@ -18,6 +18,9 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
         return test(i);
     }
 
+    default void accept(I i) {
+    }
+
     default PartialConsumer<I> otherwise(Consumer<I> c) {
         return PartialConsumer.compose(this, fromPredicateAndConsumer(
                 i -> !PartialConsumer.this.test(i),
