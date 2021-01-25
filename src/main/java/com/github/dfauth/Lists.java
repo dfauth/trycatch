@@ -2,6 +2,7 @@ package com.github.dfauth;
 
 import com.github.dfauth.partial.Tuple2;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,7 @@ public class Lists {
     }
 
     public static final <T> List<T> tail(List<T> l) {
-        return l.subList(1,l.size()-1);
+        return l.size() > 1 ? l.subList(1,l.size()) : Collections.emptyList();
     }
 
     public static final <T> Tuple2<T,List<T>> segment(List<T> l) {
