@@ -275,7 +275,7 @@ public class TryCatchTestCase {
             t.onComplete(
                     PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
-                    .otherwise(_t -> logger.info("otherwise("+_t+")"))
+                    ._otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
             assertExceptionLogged(runtimeOops);
             assertInfoLogged(msg -> msg.startsWith("otherwise("));
@@ -287,7 +287,7 @@ public class TryCatchTestCase {
                             .thenAccept(_t -> logger.info(_t+" is success")),
                     PartialConsumer._case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info(_t+" is failure"))
-                    .otherwise(_t -> logger.info("otherwise("+_t+")"))
+                    ._otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
             assertExceptionLogged(runtimeOops);
             assertInfoLogged(msg -> msg.endsWith(" is failure"));

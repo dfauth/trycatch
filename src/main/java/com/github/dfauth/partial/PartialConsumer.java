@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
+public interface PartialConsumer<I> extends PartialFunction<I,Void>, Consumer<I> {
 
     static <I> PartialConsumer<I> _case(Predicate<I> p) {
         return fromPredicate(p);
@@ -18,10 +18,16 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
         return test(i);
     }
 
+    @Override
+    default Void apply(I i) {
+        accept(i);
+        return null;
+    }
+
     default void accept(I i) {
     }
 
-    default PartialConsumer<I> otherwise(Consumer<I> c) {
+    default PartialConsumer<I> _otherwise(Consumer<I> c) {
         return PartialConsumer.compose(this, fromPredicateAndConsumer(
                 i -> !PartialConsumer.this.test(i),
                 c
@@ -32,7 +38,7 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
         return fromPredicateAndConsumer(p, i -> {});
     }
 
-    static <I> PartialConsumer<I> fromConsumer(Predicate<I> p, Consumer<I> c) {
+    static <I> PartialConsumer<I> fromConsumer(Consumer<I> c) {
         return fromPredicateAndConsumer(i -> true, c);
     }
 
@@ -57,20 +63,5 @@ public interface PartialConsumer<I> extends Predicate<I>, Consumer<I> {
                     Stream.of(partials).filter(p -> p.test(i)).findFirst().ifPresent(p -> p.accept(i));
                 }
             );
-    }
-
-    default Tuple2<Predicate<I>, Consumer<I>> decompose() {
-        return Tuple2.of(i -> PartialConsumer.this.test(i),i -> PartialConsumer.this.accept(i));
-    }
-
-    default PartialConsumer<I> thenAccept(Consumer<I> c) {
-        Tuple2<Predicate<I>, Consumer<I>> tuple = PartialConsumer.this.decompose();
-        return fromPredicateAndConsumer(
-                tuple._1(),
-                i -> {
-                    tuple._2().accept(i);
-                    c.accept(i);
-                }
-        );
     }
 }
