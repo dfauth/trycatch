@@ -24,4 +24,8 @@ public interface Function2<T,U,V> extends BiFunction<T,U,V> {
     static <T,U,V> Function2<T,U,V> asFunction2(BiFunction<T,U,V> f) {
         return (t,u) -> f.apply(t,u);
     }
+
+    static <T,U,V> Function2<T,U,V> uncurry(Function<T,Function<U,V>> f) {
+        return (t,u) -> f.apply(t).apply(u);
+    }
 }

@@ -2,6 +2,7 @@ package com.github.dfauth;
 
 import com.github.dfauth.partial.Tuple2;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,12 @@ public class Lists {
 
     public static final <T> Tuple2<T,List<T>> segment(List<T> l) {
         return Tuple2.of(head(l), tail(l));
+    }
+
+    public static final <T> List<T> reverse(List<T> l) {
+        List<T> tmp = new ArrayList<>(l);
+        Collections.reverse(tmp);
+        return tmp;
     }
 
 }
