@@ -2,10 +2,7 @@ package com.github.dfauth;
 
 import com.github.dfauth.partial.Tuple2;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class Lists {
 
@@ -18,7 +15,7 @@ public class Lists {
     }
 
     public static final <T> List<T> tail(List<T> l) {
-        return l.size() > 1 ? l.subList(1,l.size()) : Collections.emptyList();
+        return l.size() > 1 ? List.copyOf(l.subList(1,l.size())) : Collections.emptyList();
     }
 
     public static final <T> Tuple2<T,List<T>> segment(List<T> l) {
@@ -28,7 +25,13 @@ public class Lists {
     public static final <T> List<T> reverse(List<T> l) {
         List<T> tmp = new ArrayList<>(l);
         Collections.reverse(tmp);
-        return tmp;
+        return List.copyOf(tmp);
+    }
+
+    public static final <T> List<T> append(List<T> l, T... ts) {
+        List<T> tmp = new ArrayList<>(l);
+        tmp.addAll(Arrays.asList(ts));
+        return List.copyOf(tmp);
     }
 
 }
