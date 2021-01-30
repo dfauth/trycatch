@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.function.Function;
 
 import static com.github.dfauth.partial.Matcher.matcher;
-import static com.github.dfauth.partial.PartialFunction._case;
+import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.partial.PartialFunction.identity;
 import static com.github.dfauth.partial.PartialFunctions.*;
 import static org.junit.Assert.assertEquals;

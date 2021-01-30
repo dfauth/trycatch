@@ -1,6 +1,5 @@
 package com.github.dfauth.trycatch;
 
-import com.github.dfauth.partial.PartialFunction;
 import com.github.dfauth.partial.PartialFunctions;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-import static com.github.dfauth.partial.PartialFunction._case;
+import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.partial.VoidFunction.peek;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
@@ -252,9 +251,9 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    PartialFunction._case((Try<Integer> _t) -> t.isSuccess())
+                    PartialFunctions._case((Try<Integer> _t) -> t.isSuccess())
                             .thenAccept(_t -> logger.info("t is success")),
-                    PartialFunction._case((Try<Integer> _t) -> t.isFailure())
+                    PartialFunctions._case((Try<Integer> _t) -> t.isFailure())
                             .thenAccept(_t -> logger.info("t is failure"))
             );
             assertInfoLogged("t is success");
@@ -283,9 +282,9 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
-                    PartialFunction._case((Try<Integer> _t) -> _t.isSuccess())
+                    PartialFunctions._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
-                    PartialFunction._case((Try<Integer> _t) -> _t.isFailure())
+                    PartialFunctions._case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info(_t+" is failure"))
                     ._otherwise(_t -> logger.info("otherwise("+_t+")"))
             );

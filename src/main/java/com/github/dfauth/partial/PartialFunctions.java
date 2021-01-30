@@ -4,12 +4,32 @@ import com.github.dfauth.trycatch.Failure;
 import com.github.dfauth.trycatch.Success;
 import com.github.dfauth.trycatch.Try;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
+import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
+import static com.github.dfauth.partial.PartialFunction.fromPredicate;
 import static com.github.dfauth.partial.PartialFunction.fromPredicateAndFunction;
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public class PartialFunctions {
+
+    public static <I,O> PartialFunction<I,O> _case(PartialFunction<I, O> pf) {
+        return pf;
+    }
+
+    public static <I,O> PartialFunction<I,I> _case(Predicate<I> p) {
+        return fromPredicate(p);
+    }
+
+    public static <I,O> PartialFunction<I,O> _case(Predicate<I> p, Function<I,O> f) {
+        return fromPredicateAndFunction(p,f);
+    }
+
+    public static <I,O> PartialFunction<I,Void> _case(Predicate<I> p, Consumer<I> c) {
+        return fromPredicateAndConsumer(p,c);
+    }
 
     public static <T,R extends T> PartialFunction<T,R> downcast(Function<T,R> f) {
         return fromPredicateAndFunction(i -> tryCatch(() -> {

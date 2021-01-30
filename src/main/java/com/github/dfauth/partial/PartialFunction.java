@@ -4,28 +4,15 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
 
 public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
 
     default Function<I,Optional<O>> asFunction() {
         return i -> test(i) ? Optional.ofNullable(apply(i)) : Optional.empty();
-    }
-
-    static <I,O> PartialFunction<I,O> _case(PartialFunction<I, O> pf) {
-        return pf;
-    }
-
-    static <I,O> PartialFunction<I,I> _case(Predicate<I> p) {
-        return fromPredicate(p);
-    }
-
-    static <I,O> PartialFunction<I,O> _case(Predicate<I> p, Function<I,O> f) {
-        return fromPredicateAndFunction(p,f);
-    }
-
-    static <I,O> PartialFunction<I,Void> _case(Predicate<I> p, Consumer<I> c) {
-        return PartialConsumer.fromPredicateAndConsumer(p,c);
     }
 
     default <T extends I> boolean isDefinedAt(T t) {
@@ -71,11 +58,57 @@ public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
         };
     }
 
-    default <V> PartialFunction<I, O> or(PartialFunction<I,O>... partials) {
+    default <V> PartialFunction<I, O> _or(PartialFunction<I,O>... partials) {
         return fromPredicateAndFunction(
                 i -> Stream.of(partials).filter(p -> p.test(i)).findFirst().isPresent(),
                 i -> Stream.of(partials).filter(p -> p.test(i)).map(p -> p.apply(i)).findFirst().orElseThrow(() -> new IllegalStateException("No match"))
         );
+    }
+
+    default PartialFunction<I, O> or(Predicate<I> p, Function<I,O> f) {
+        return _or(fromPredicateAndFunction(p, f));
+    }
+
+    default PartialFunction<I, O> _case(Predicate<I> p, Function<I,O> f) {
+        return or(p, f);
+    }
+
+    default PartialFunction<I, Void> or(Predicate<I> p, Consumer<I> c) {
+        return fromPredicateAndConsumer(this.and(p),c);
+    }
+
+    default PartialFunction<I, Void> _case(Predicate<I> p, Consumer<I> c) {
+        return or(p,c);
+    }
+
+    default Function<I,O> orDefault(O o) {
+        return i -> asFunction().apply(i).orElse(o);
+    }
+
+    default Function<I,O> _otherwise(O o) {
+        return orDefault(o);
+    }
+
+    default Function<I,O> orGet(Supplier<O> s) {
+        return i -> asFunction().apply(i).orElseGet(s);
+    }
+
+    default Function<I,O> _otherwise(Supplier<O> s) {
+        return orGet(s);
+    }
+
+    default Function<I,Void> _otherwise(Runnable r) {
+        return (Function<I, Void>) orGet(() -> {
+            r.run();
+            return null;
+        });
+    }
+
+    default Function<I,Void> orGet(Runnable r) {
+        return i -> (Void) asFunction().apply(i).orElseGet(() -> {
+            r.run();
+            return null;
+        });
     }
 
     default Tuple2<Predicate<I>, Function<I,O>> decompose() {
