@@ -29,4 +29,9 @@ public interface VoidFunction<T> extends Function<T,Void>, Consumer<T> {
             return t;
         };
     }
+
+    static Void supplyVoid(Runnable r) {
+        r.run();
+        return null;
+    }
 }

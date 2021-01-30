@@ -8,12 +8,24 @@ import java.util.stream.Stream;
 
 public interface PartialFunction<I,O> extends Function<I,O>, Predicate<I> {
 
+    default Function<I,Optional<O>> asFunction() {
+        return i -> test(i) ? Optional.ofNullable(apply(i)) : Optional.empty();
+    }
+
     static <I,O> PartialFunction<I,O> _case(PartialFunction<I, O> pf) {
         return pf;
     }
 
+    static <I,O> PartialFunction<I,I> _case(Predicate<I> p) {
+        return fromPredicate(p);
+    }
+
     static <I,O> PartialFunction<I,O> _case(Predicate<I> p, Function<I,O> f) {
         return fromPredicateAndFunction(p,f);
+    }
+
+    static <I,O> PartialFunction<I,Void> _case(Predicate<I> p, Consumer<I> c) {
+        return PartialConsumer.fromPredicateAndConsumer(p,c);
     }
 
     default <T extends I> boolean isDefinedAt(T t) {

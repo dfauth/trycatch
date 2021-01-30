@@ -1,6 +1,5 @@
 package com.github.dfauth.trycatch;
 
-import com.github.dfauth.partial.PartialConsumer;
 import com.github.dfauth.partial.PartialFunction;
 import com.github.dfauth.partial.PartialFunctions;
 import org.junit.Before;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.*;
 
+import static com.github.dfauth.partial.PartialFunction._case;
 import static com.github.dfauth.partial.VoidFunction.peek;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
@@ -252,9 +252,9 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    PartialConsumer._case((Try<Integer> _t) -> t.isSuccess())
+                    PartialFunction._case((Try<Integer> _t) -> t.isSuccess())
                             .thenAccept(_t -> logger.info("t is success")),
-                    PartialConsumer._case((Try<Integer> _t) -> t.isFailure())
+                    PartialFunction._case((Try<Integer> _t) -> t.isFailure())
                             .thenAccept(_t -> logger.info("t is failure"))
             );
             assertInfoLogged("t is success");
@@ -262,9 +262,9 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
-                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
+                    _case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info("_t is success")),
-                    PartialConsumer._case((Try<Integer> _t) -> _t.isFailure())
+                    _case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info("_t is failure"))
             );
             assertExceptionLogged(runtimeOops);
@@ -273,7 +273,7 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
-                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
+                    _case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success"))
                     ._otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
@@ -283,9 +283,9 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
-                    PartialConsumer._case((Try<Integer> _t) -> _t.isSuccess())
+                    PartialFunction._case((Try<Integer> _t) -> _t.isSuccess())
                             .thenAccept(_t -> logger.info(_t+" is success")),
-                    PartialConsumer._case((Try<Integer> _t) -> _t.isFailure())
+                    PartialFunction._case((Try<Integer> _t) -> _t.isFailure())
                             .thenAccept(_t -> logger.info(_t+" is failure"))
                     ._otherwise(_t -> logger.info("otherwise("+_t+")"))
             );
@@ -295,7 +295,7 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    PartialFunction._case(PartialFunctions.downcast((Try<Integer> _t) -> (Success<Integer>)_t))
+                    _case(PartialFunctions.downcast((Try<Integer> _t) -> (Success<Integer>)_t))
                             .thenAccept(_t ->
                                     logger.info("result is "+_t.result()))
             );
