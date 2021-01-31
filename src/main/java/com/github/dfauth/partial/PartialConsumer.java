@@ -2,7 +2,10 @@ package com.github.dfauth.partial;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static com.github.dfauth.partial.VoidFunction.peek;
 
 public interface PartialConsumer<I> extends PartialFunction<I,Void>, Consumer<I> {
 
@@ -55,5 +58,13 @@ public interface PartialConsumer<I> extends PartialFunction<I,Void>, Consumer<I>
                     Stream.of(partials).filter(p -> p.test(i)).findFirst().ifPresent(p -> p.accept(i));
                 }
             );
+    }
+
+    default PartialConsumer<I> _or(PartialConsumer<I>... partials) {
+        Supplier<Stream<PartialConsumer<I>>> s = () -> Stream.concat(Stream.of(this), Stream.of(partials));
+        return fromPredicateAndConsumer(
+                i -> s.get().filter(p -> p.test(i)).findFirst().isPresent(),
+                i -> s.get().filter(p -> p.test(i)).map(peek(p -> p.accept(i))).findFirst().orElseThrow(() -> new IllegalStateException("No match"))
+        );
     }
 }

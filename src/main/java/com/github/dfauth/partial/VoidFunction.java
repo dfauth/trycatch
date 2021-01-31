@@ -19,8 +19,20 @@ public interface VoidFunction<T> extends Function<T,Void>, Consumer<T> {
         return r -> f.apply(r).ifPresent(_t -> accept(_t));
     }
 
+    static <T,R> VoidFunction<T> toVoidFunction(Function<T,R> f) {
+        return t -> f.apply(t);
+    }
+
     static <T> VoidFunction<T> toFunction(Consumer<T> c) {
         return t -> c.accept(t);
+    }
+
+    static <T> Consumer<T> toConsumer(Function<T,?> f) {
+        return t -> f.apply(t);
+    }
+
+    static <T> Function<T,Void> toFunction(Runnable r) {
+        return toFunction(i -> r.run());
     }
 
     static <T> UnaryOperator<T> peek(Consumer<T> c) {

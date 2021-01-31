@@ -1,5 +1,8 @@
-package com.github.dfauth.trycatch;
+package com.github.dfauth.partial;
 
+import com.github.dfauth.trycatch.Success;
+import com.github.dfauth.trycatch.Try;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +31,7 @@ public class MatchTest {
     @Test
     public void testIt() {
         Try<Integer> test = Try.success(1);
-        assertEquals(1, matcher(test).matchFirstOf(
+        Assert.assertEquals(1, matcher(test).matchFirstOf(
                 _case(downcast((Try<Integer> t) -> (Success<Integer>)t)
                         .thenMap(s -> s.result()))
                 ).orElse(0).intValue()
