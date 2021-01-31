@@ -22,7 +22,7 @@ public class MatchTest {
     @Test
     public void testSimplified() {
         Try<Integer> test = Try.success(1);
-        assertEquals(test, matcher(test).matchFirstOf(
+        assertEquals(test, matcher(test).matchOpt(
                 _case(identity())
                 ).orElseThrow(() -> new RuntimeException(""))
         );
@@ -31,7 +31,7 @@ public class MatchTest {
     @Test
     public void testIt() {
         Try<Integer> test = Try.success(1);
-        Assert.assertEquals(1, matcher(test).matchFirstOf(
+        Assert.assertEquals(1, matcher(test).matchOpt(
                 _case(downcast((Try<Integer> t) -> (Success<Integer>)t)
                         .thenMap(s -> s.result()))
                 ).orElse(0).intValue()
@@ -42,7 +42,7 @@ public class MatchTest {
     public void testAndIf() {
         {
             Try<Integer> test = Try.success(1);
-            assertEquals("ONE", matcher(test).matchFirstOf(
+            assertEquals("ONE", matcher(test).matchOpt(
                     _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
                             .andIf(s -> s.result() == 1))
                             .thenMap(s -> "ONE"))
@@ -51,7 +51,7 @@ public class MatchTest {
         }
         {
             Try<Integer> test = Try.success(0);
-            assertEquals("NO_MATCH", matcher(test).matchFirstOf(
+            assertEquals("NO_MATCH", matcher(test).matchOpt(
                     _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
                             .andIf(s -> s.result() == 1)
                             .thenMap(s -> "ONE"))
@@ -60,7 +60,7 @@ public class MatchTest {
         }
         {
             Try<String> test = Try.success("poo");
-            assertEquals("NO_MATCH", matcher(test).matchFirstOf(
+            assertEquals("NO_MATCH", matcher(test).matchOpt(
                     _case(downcast((Try<String> a) -> (Success<String>)a)
                             .andIf(s -> s.result() == "BLAH")
                             .thenMap(s -> "BLAH"))
@@ -69,7 +69,7 @@ public class MatchTest {
         }
         {
             Try<String> test = Try.success("poo");
-            assertEquals("MATCH_POO", matcher(test).matchFirstOf(
+            assertEquals("MATCH_POO", matcher(test).matchOpt(
                     _case(downcast((Try<String> a) -> (Success<String>)a)
                             .andIf(s -> s.result().equals("blah"))
                             .andIf(s -> s.result().equalsIgnoreCase("BLAH"))
@@ -84,7 +84,7 @@ public class MatchTest {
 
     @Test
     public void testSuccess() {
-        Function<Try<Integer>, String> f = t -> matcher(t).matchFirstOf(
+        Function<Try<Integer>, String> f = t -> matcher(t).matchOpt(
                 _case(isSuccessOf(Integer.class)
                         .andIf(s -> s.result() == 0)
                         .thenMap(s -> "ZERO")),

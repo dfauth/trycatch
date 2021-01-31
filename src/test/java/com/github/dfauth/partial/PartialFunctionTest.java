@@ -30,7 +30,7 @@ public class PartialFunctionTest {
         Predicate<Integer> p = t -> t==1;
         Consumer<Integer> c = t -> result.set(t);
         PartialConsumer<Integer> pf = fromPredicateAndConsumer(p, c);
-        matcher(1).matchDefault(pf._otherwise(() -> {}));
+        matcher(1).match(pf._otherwise(() -> {}));
         assertEquals(1, result.get());
     }
 
@@ -44,22 +44,22 @@ public class PartialFunctionTest {
         Function<Integer, Void> pf = is1._or(is2)._or(is3)._otherwise(doNothing);
         {
             result.set(-1);
-            matcher(1).matchDefault(pf);
+            matcher(1).match(pf);
             assertEquals(143, result.get());
         }
         {
             result.set(-1);
-            matcher(2).matchDefault(pf);
+            matcher(2).match(pf);
             assertEquals(69, result.get());
         }
         {
             result.set(-1);
-            matcher(3).matchDefault(pf);
+            matcher(3).match(pf);
             assertEquals(34, result.get());
         }
         {
             result.set(-1);
-            matcher(4).matchDefault(pf);
+            matcher(4).match(pf);
             assertEquals(-1, result.get());
         }
     }
@@ -108,14 +108,14 @@ public class PartialFunctionTest {
     }
 
     private Function<Tuple2<Boolean, Boolean>, Optional<Integer>> doitPartial = t ->
-        matcher(t).matchFirstOf(
+        matcher(t).matchOpt(
                 _case(matchBoth, _t -> 0)
                         ._case(match1, _t -> 1)
                         ._case(match2, _t -> 2)
         );
 
     private Function<Tuple2<Boolean, Boolean>,Integer> doitDefault = t ->
-        matcher(t).matchDefault(
+        matcher(t).match(
                 _case(matchBoth, _t -> 0)
                         ._case(match1, _t -> 1)
                         ._case(match2, _t -> 2)
@@ -123,7 +123,7 @@ public class PartialFunctionTest {
         );
 
     private Function<Tuple2<Boolean, Boolean>,Integer> doitSupplier = t ->
-        matcher(t).matchDefault(
+        matcher(t).match(
                 _case(matchBoth, _t -> 0)
                         ._case(match1, _t -> 1)
                         ._case(match2, _t -> 2)
@@ -132,7 +132,7 @@ public class PartialFunctionTest {
 
     private Function<Tuple2<Boolean, Boolean>,Optional<Integer>> doitPartialVoid = t -> {
         AtomicReference<Optional<Integer>> tmp = new AtomicReference<>(Optional.empty());
-        matcher(t).matchFirstOf(
+        matcher(t).matchOpt(
                 _case(matchBoth, _t -> {
                     tmp.set(Optional.ofNullable(0));
                 })
@@ -148,7 +148,7 @@ public class PartialFunctionTest {
 
     private Function<Tuple2<Boolean, Boolean>,Integer> doitVoid = t -> {
         AtomicInteger tmp = new AtomicInteger(-1);
-        matcher(t).matchDefault(
+        matcher(t).match(
                 _case(matchBoth, _t -> {
                     tmp.set(0);
                 })
