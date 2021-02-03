@@ -6,8 +6,10 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
+import static com.github.dfauth.function.Function2.asPredicate;
 import static com.github.dfauth.partial.Unit.Function.peek;
 import static com.github.dfauth.trycatch.ThrowableHandlers.consume;
 import static com.github.dfauth.trycatch.ThrowableHandlers.noOp;
@@ -21,6 +23,26 @@ public class TryCatch {
     public static Function<Throwable,Void> propagationHandler = t -> {
             throw new RuntimeException(t);
     };
+
+    public static Function<Throwable,Boolean> alwaysTrue = defaultValueOf(true);
+
+    public static Function<Throwable,Boolean> alwaysFalse = defaultValueOf(false);
+
+    public static <T> Function<Throwable,T> defaultValueOf(T t) {
+        return always(t);
+    }
+
+    public static <T> Predicate<T> alwaysTrue() {
+        return asPredicate(always(true));
+    }
+
+    public static <T> Predicate<T> alwaysFalse() {
+        return asPredicate(always(false));
+    }
+
+    public static <T,R> Function<T,R> always(R r) {
+        return ignored -> r;
+    }
 
     public static <T> Function<Throwable,T> propagationHandler() {
         return  t -> {

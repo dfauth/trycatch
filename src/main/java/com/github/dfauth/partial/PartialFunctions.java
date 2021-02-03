@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
-import static com.github.dfauth.trycatch.TryCatch.tryCatch;
+import static com.github.dfauth.trycatch.TryCatch.*;
 import static java.util.function.Function.identity;
 
 public class PartialFunctions {
@@ -20,14 +20,14 @@ public class PartialFunctions {
     }
 
     static <T,R> PartialFunction<T,R> fromFunction(Function<T,R> f) {
-        return fromPredicateAndFunction(x -> true, f);
+        return fromPredicateAndFunction(alwaysTrue(), f);
     }
 
     static <T,R> PartialFunction<T,R> fromPredicateAndFunction(Predicate<T> p, Function<T,R> f) {
         return new PartialFunction<>() {
             @Override
             public boolean isDefinedAt(T t) {
-                return tryCatch(() -> p.test(t), ignored -> false);
+                return tryCatch(() -> p.test(t), alwaysFalse);
             }
 
             @Override
@@ -37,7 +37,7 @@ public class PartialFunctions {
         };
     }
 
-    static <T,R> Function<T, Optional<R>> asFunction(Predicate<T> p, Function<T,R> f) {
+    static <T,R> Function<T, Optional<R>> lift(Predicate<T> p, Function<T,R> f) {
         return fromPredicateAndFunction(p,f).lift();
     }
 
@@ -58,17 +58,17 @@ public class PartialFunctions {
     }
 
     public static <T,R extends T> PartialFunction<T,R> narrow(Function<T,R> f) {
-        return narrow(f, ignored -> true);
+        return narrow(f, alwaysTrue());
     }
 
     public static <T,R extends T> PartialFunction<T,R> narrow(Function<T,R> f, Predicate<R> p) {
         return fromPredicateAndFunction(t -> tryCatch(() ->
             p.test(f.apply(t)),
-            ignored -> false), f);
+            alwaysFalse), f);
     }
 
     public static <T> PartialFunction<Try<T>, Success<T>> isSuccessOf(Class<T> classOfT) {
-        return isSuccessOf(classOfT, ignored -> true);
+        return isSuccessOf(classOfT, alwaysTrue());
     }
 
     public static <T,R> PartialFunction<Try<T>, Success<T>> isSuccessOf(Class<T> classOfT, Predicate<T> p) {
@@ -76,7 +76,7 @@ public class PartialFunctions {
     }
 
     public static <T> PartialFunction<Try<T>, Failure<T>> isFailureOf(Class<T> classOfT) {
-        return isFailureOf(classOfT, ignored -> true);
+        return isFailureOf(classOfT, alwaysTrue());
     }
 
     public static <T> PartialFunction<Try<T>, Failure<T>> isFailureOf(Class<T> classOfT, Predicate<Throwable>  p) {

@@ -2,6 +2,7 @@ package com.github.dfauth.function;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public interface Function2<T,U,V> extends BiFunction<T,U,V> {
 
@@ -28,4 +29,9 @@ public interface Function2<T,U,V> extends BiFunction<T,U,V> {
     static <T,U,V> Function2<T,U,V> uncurry(Function<T,Function<U,V>> f) {
         return (t,u) -> f.apply(t).apply(u);
     }
+
+    static <T> Predicate<T> asPredicate(Function<T, Boolean> f) {
+        return t -> f.apply(t);
+    }
+
 }
