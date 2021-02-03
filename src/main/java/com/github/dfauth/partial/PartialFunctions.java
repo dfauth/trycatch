@@ -11,11 +11,12 @@ import java.util.function.Predicate;
 
 import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
+import static java.util.function.Function.identity;
 
 public class PartialFunctions {
 
     static <T,R> PartialFunction<T,T> fromPredicate(Predicate<T> p) {
-        return fromPredicateAndFunction(p, Function.identity());
+        return fromPredicateAndFunction(p, identity());
     }
 
     static <T,R> PartialFunction<T,R> fromFunction(Function<T,R> f) {
@@ -26,7 +27,7 @@ public class PartialFunctions {
         return new PartialFunction<>() {
             @Override
             public boolean isDefinedAt(T t) {
-                return p.test(t);
+                return tryCatch(() -> p.test(t), ignored -> false);
             }
 
             @Override
@@ -56,18 +57,29 @@ public class PartialFunctions {
         return fromPredicateAndConsumer(p,c);
     }
 
-    public static <T,R extends T> PartialFunction<T,R> downcast(Function<T,R> f) {
-        return fromPredicateAndFunction(i -> tryCatch(() -> {
-            f.apply(i);
-            return true;
-        }, t -> false), f);
+    public static <T,R extends T> PartialFunction<T,R> narrow(Function<T,R> f) {
+        return narrow(f, ignored -> true);
     }
 
-    public static <T,R extends T> PartialFunction<Try<T>, Success<T>> isSuccessOf(Class<T> classOfT) {
-        return fromPredicateAndFunction((Try<T> t) -> t.isSuccess(), (Try<T> t) -> t.toSuccess());
+    public static <T,R extends T> PartialFunction<T,R> narrow(Function<T,R> f, Predicate<R> p) {
+        return fromPredicateAndFunction(t -> tryCatch(() ->
+            p.test(f.apply(t)),
+            ignored -> false), f);
     }
 
-    public static <T,R extends T> PartialFunction<Try<T>, Failure<T>> isFailureOf(Class<T> classOfT) {
-        return fromPredicateAndFunction((Try<T> t) -> t.isFailure(), (Try<T> t) -> t.toFailure());
+    public static <T> PartialFunction<Try<T>, Success<T>> isSuccessOf(Class<T> classOfT) {
+        return isSuccessOf(classOfT, ignored -> true);
+    }
+
+    public static <T,R> PartialFunction<Try<T>, Success<T>> isSuccessOf(Class<T> classOfT, Predicate<T> p) {
+        return fromPredicateAndFunction((Try<T> t) -> t.isSuccess() && p.test(t.toSuccess().result()), (Try<T> t) -> t.toSuccess());
+    }
+
+    public static <T> PartialFunction<Try<T>, Failure<T>> isFailureOf(Class<T> classOfT) {
+        return isFailureOf(classOfT, ignored -> true);
+    }
+
+    public static <T> PartialFunction<Try<T>, Failure<T>> isFailureOf(Class<T> classOfT, Predicate<Throwable>  p) {
+        return fromPredicateAndFunction((Try<T> t) -> t.isFailure() && p.test(t.toFailure().exception()), (Try<T> t) -> t.toFailure());
     }
 }

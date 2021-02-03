@@ -341,7 +341,7 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    _case(PartialFunctions.downcast((Try<Integer> _t) -> (Success<Integer>)_t))
+                    _case(PartialFunctions.narrow((Try<Integer> _t) -> (Success<Integer>)_t))
                             .andThen(_t -> {
                                     logger.info("result is "+_t.result());
                             })

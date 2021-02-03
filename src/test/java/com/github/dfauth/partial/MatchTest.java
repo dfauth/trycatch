@@ -8,12 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.function.Function;
 
-import static com.github.dfauth.partial.PartialFunction.of;
-import static com.github.dfauth.partial.Unit.UNIT;
 import static com.github.dfauth.partial.Matcher.matcher;
 import static com.github.dfauth.partial.PartialFunction.identity;
+import static com.github.dfauth.partial.PartialFunction.of;
 import static com.github.dfauth.partial.PartialFunctions.*;
+import static com.github.dfauth.partial.Unit.UNIT;
 import static org.junit.Assert.assertEquals;
 
 public class MatchTest {
@@ -33,7 +34,7 @@ public class MatchTest {
     public void testIt() {
         Try<Integer> test = Try.success(1);
         Assert.assertEquals(Optional.of(UNIT), matcher(test).matchOpt(
-                _case(downcast((Try<Integer> t) -> (Success<Integer>)t)
+                _case(narrow((Try<Integer> t) -> (Success<Integer>)t)
                         .andThen(s -> {
                             s.result();
                         }))
@@ -45,54 +46,49 @@ public class MatchTest {
     public void testAndIf() {
         {
             Try<Integer> test = Try.success(1);
-            assertEquals(Optional.of("ONE"), matcher(test).matchOpt(
-                    _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
-                            .andThen(of(s -> s.result() == 1, s -> "ONE")))
+            assertEquals("ONE", matcher(test).match(
+                    _case(narrow((Try<Integer> t) -> (Success<Integer>)t, s -> s.result() == 1)
+                            .andThen(s -> "ONE"))
+                    ._otherwise("NONE")
             ));
         }
-/**        {
+        {
             Try<Integer> test = Try.success(0);
-            assertEquals("NO_MATCH", matcher(test).matchOpt(
-                    _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
-                            .andIf(s -> s.result() == 1)
-                            .thenMap(s -> "ONE"))
-                    ).orElse("NO_MATCH")
-            );
+            assertEquals("NO_MATCH", matcher(test).match(
+                    _case(narrow((Try<Integer> a) -> (Success<Integer>)a, s -> s.result() == 1)
+                            .andThen(s -> "ONE"))
+                    ._otherwise("NO_MATCH")
+            ));
         }
         {
             Try<String> test = Try.success("poo");
-            assertEquals("NO_MATCH", matcher(test).matchOpt(
-                    _case(downcast((Try<String> a) -> (Success<String>)a)
-                            .andIf(s -> s.result() == "BLAH")
-                            .thenMap(s -> "BLAH"))
-                    ).orElse("NO_MATCH")
-            );
+            assertEquals("NO_MATCH", matcher(test).match(
+                    _case(isSuccessOf(String.class)
+                            .andThen(of(s -> s.result() == "BLAH", s -> "BLAH")))
+                    ._otherwise("NO_MATCH")
+            ));
         }
         {
             Try<String> test = Try.success("poo");
-            assertEquals("MATCH_POO", matcher(test).matchOpt(
-                    _case(downcast((Try<String> a) -> (Success<String>)a)
-                            .andIf(s -> s.result().equals("blah"))
-                            .andIf(s -> s.result().equalsIgnoreCase("BLAH"))
-                            .thenMap(s -> "MATCH_BLAH")),
-                    _case(downcast((Try<String> a) -> (Success<String>)a)
-                            .andIf(s -> s.result().equals("poo"))
-                            .thenMap(s -> "MATCH_POO"))
-                    ).orElse("NO_MATCH")
-            );
+            assertEquals("MATCH_POO", matcher(test).match(
+                    _case(isSuccessOf(String.class, s -> s.equalsIgnoreCase("BLAH"))
+                            .andThen(s -> "MATCH_BLAH"))
+                    ._case(isSuccessOf(String.class,s -> s.equals("poo"))
+                            .andThen(s -> "MATCH_POO"))
+                    ._otherwise("NO_MATCH")
+            ));
         }
     }
 
     @Test
     public void testSuccess() {
-        Function<Try<Integer>, String> f = t -> matcher(t).matchOpt(
+        Function<Try<Integer>, String> f = t -> matcher(t).match(
                 _case(isSuccessOf(Integer.class)
-                        .andIf(s -> s.result() == 0)
-                        .thenMap(s -> "ZERO")),
-                _case(isFailureOf(Integer.class)
-                        .andIf(s -> s.exception() instanceof RuntimeException)
-                        .thenMap(_f -> _f.exception().getMessage()))
-        ).orElse("NO_MATCH");
+                        .andThen(of(s -> s.result() == 0, s -> "ZERO")))
+                ._case(isFailureOf(Integer.class)
+                        .andThen(of(_f -> _f.exception() instanceof RuntimeException, _f -> _f.exception().getMessage())))
+                ._otherwise("NO_MATCH")
+        );
         {
             Try<Integer> test = Try.success(0);
             assertEquals("ZERO", f.apply(test));
@@ -104,7 +100,7 @@ public class MatchTest {
         {
             Try<Integer> test = Try.success(1);
             assertEquals("NO_MATCH", f.apply(test));
-        } **/
+        }
     }
 
 

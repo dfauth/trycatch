@@ -55,47 +55,6 @@ public interface PartialFunction<I,O> {
         return of(asPredicate(), i -> run(() -> c.accept(_apply(i))));
     }
 
-    /*
-    default <U> PartialFunction<I, U> thenMap(Function<O, U> f) {
-        return and(fromFunction(f));
-    }
-
-    default <U> PartialFunction<I, U> thenMap(PartialFunction<O,U> pf) {
-        return and(pf);
-    }
-
-    default PartialFunction<I, O> andIf(Predicate<O> p) {
-        return and(fromPredicate(p));
-    }
-
-    default <U> PartialFunction<I, U> andIf(PartialFunction<O,U> pf) {
-        return and(pf);
-    }
-
-    default <V> PartialFunction<I, V> and(PartialFunction<O,V> pf) {
-        return new PartialFunction<I, V>() {
-            @Override
-            public V _apply(I i) {
-                return Optional.ofNullable(i)
-                        .filter(PartialFunction.this.asPredicate())
-                        .map(_i -> PartialFunction.this._apply(_i))
-                        .filter(pf.asPredicate())
-                        .map(_i -> pf.apply(_i))
-                        .orElseThrow(() -> new IllegalStateException("Oops. shouldnt happen"));
-            }
-
-            @Override
-            public boolean isDefinedAt(I i) {
-                return Optional.ofNullable(i)
-                        .filter(PartialFunction.this.asPredicate())
-                        .map(_i -> PartialFunction.this._apply(_i))
-                        .filter(pf.asPredicate())
-                        .isPresent();
-            }
-        };
-    }
-*/
-
     default <V> PartialFunction<I, O> _or(PartialFunction<I,O>... partials) {
         Supplier<Stream<PartialFunction<I, O>>> s = () -> Stream.concat(Stream.of(this), Stream.of(partials));
         return fromPredicateAndFunction(
@@ -109,7 +68,11 @@ public interface PartialFunction<I,O> {
     }
 
     default PartialFunction<I, O> _case(Predicate<I> p, Function<I,O> f) {
-        return _or(p, f);
+        return _case(of(p, f));
+    }
+
+    default PartialFunction<I, O> _case(PartialFunction<I,O> f) {
+        return _or(f);
     }
 
     default PartialFunction<I, Unit> _or(Predicate<I> p, Consumer<I> c) {
