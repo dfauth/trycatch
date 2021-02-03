@@ -14,8 +14,8 @@ import static com.github.dfauth.trycatch.TryCatch.*;
 
 public interface Try<T> {
 
-    default void onComplete(PartialFunction<Try<T>, Unit>... partials) {
-        Stream.of(partials).filter(p -> p.isDefinedAt(this)).map(p -> p._apply(this)).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
+    default <R> R onComplete(PartialFunction<Try<T>, R>... partials) {
+        return Stream.of(partials).filter(p -> p.isDefinedAt(this)).map(p -> p._apply(this)).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
     }
 
     default void onComplete(Function<Try<T>, Unit> f) {
@@ -76,6 +76,10 @@ public interface Try<T> {
 
     default Success<T> toSuccess()  throws ClassCastException {
         return toSuccess(this);
+    }
+
+    static <T> Failure<T> failure() {
+        return failure(new IllegalArgumentException());
     }
 
     static <T> Failure<T> failure(Throwable t) {

@@ -1,6 +1,7 @@
 package com.github.dfauth.trycatch;
 
 import com.github.dfauth.partial.PartialFunctions;
+import com.github.dfauth.partial.Unit;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -243,6 +244,34 @@ public class TryCatchTestCase {
                 result.toFailure().throwException();
             });
             assertExceptionLogged(new ArithmeticException("/ by zero"));
+        }
+    }
+
+    @Test
+    public void testOnCompleteReturnsADefault() {
+        {
+            Try<Integer> t = Try.success(1);
+            Integer result = t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess(), (Try<Integer> _t) -> _t.toSuccess().result()),
+                    _case((Try<Integer> _t) -> t.isFailure(), ignored -> 0)
+            );
+            assertEquals(1, result.intValue());
+        }
+        {
+            Try<Integer> t = Try.failure();
+            Integer result = t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess(), (Try<Integer> _t) -> _t.toSuccess().result()),
+                    _case((Try<Integer> _t) -> t.isFailure(), ignored -> 0)
+            );
+            assertEquals(0, result.intValue());
+        }
+        {
+            Try<Integer> t = Try.failure();
+            Unit result = t.onComplete(
+                    _case((Try<Integer> _t) -> _t.isSuccess(), (Try<Integer> _t) -> logger.info("result: "+_t.toSuccess().result())),
+                    _case((Try<Integer> _t) -> t.isFailure(), (Try<Integer> _t) -> logger.info("failure: "+_t.toFailure().exception()))
+            );
+            assertEquals(Unit.UNIT, result);
         }
     }
 
