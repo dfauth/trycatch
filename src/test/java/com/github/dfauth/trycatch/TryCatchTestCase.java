@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.github.dfauth.partial.PartialFunctions._case;
-import static com.github.dfauth.partial.VoidFunction.peek;
+import static com.github.dfauth.partial.Unit.Function.peek;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
 import static com.github.dfauth.trycatch.Try.tryWith;
@@ -251,10 +251,14 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.success(1);
             t.onComplete(
-                    PartialFunctions._case((Try<Integer> _t) -> t.isSuccess())
-                            .thenAccept(_t -> logger.info("t is success")),
-                    PartialFunctions._case((Try<Integer> _t) -> t.isFailure())
-                            .thenAccept(_t -> logger.info("t is failure"))
+                    _case((Try<Integer> _t) -> t.isSuccess())
+                            .andThen(_t -> {
+                                logger.info("t is success");
+                            }),
+                    _case((Try<Integer> _t) -> t.isFailure())
+                            .andThen(_t -> {
+                                logger.info("t is failure");
+                            })
             );
             assertInfoLogged("t is success");
         }
@@ -262,9 +266,13 @@ public class TryCatchTestCase {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     _case((Try<Integer> _t) -> _t.isSuccess())
-                            .thenAccept(_t -> logger.info("_t is success")),
+                            .andThen(_t -> {
+                                logger.info("_t is success");
+                            }),
                     _case((Try<Integer> _t) -> _t.isFailure())
-                            .thenAccept(_t -> logger.info("_t is failure"))
+                            .andThen(_t -> {
+                                logger.info("_t is failure");
+                            })
             );
             assertExceptionLogged(runtimeOops);
             assertInfoLogged("_t is failure");
@@ -273,8 +281,12 @@ public class TryCatchTestCase {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
                     _case((Try<Integer> _t) -> _t.isSuccess())
-                            .thenAccept(_t -> logger.info(_t+" is success"))
-                    ._otherwise(_t -> logger.info("otherwise("+_t+")"))
+                            .andThen(_t -> {
+                                logger.info(_t+" is success");
+                            })
+                    ._otherwise(() -> {
+                        logger.info("otherwise("+t+")");
+                    })
             );
             assertExceptionLogged(runtimeOops);
             assertInfoLogged(msg -> msg.startsWith("otherwise("));
@@ -282,11 +294,17 @@ public class TryCatchTestCase {
         {
             Try<Integer> t = Try.tryWithCallable(() -> true ? throwRuntimeOops() : null);
             t.onComplete(
-                    PartialFunctions._case((Try<Integer> _t) -> _t.isSuccess())
-                            .thenAccept(_t -> logger.info(_t+" is success")),
-                    PartialFunctions._case((Try<Integer> _t) -> _t.isFailure())
-                            .thenAccept(_t -> logger.info(_t+" is failure"))
-                    ._otherwise(_t -> logger.info("otherwise("+_t+")"))
+                    _case((Try<Integer> _t) -> _t.isSuccess(),
+                            _t -> {
+                                logger.info(_t+" is success");
+                            })
+                    ._case((Try<Integer> _t) -> _t.isFailure(),
+                            _t -> {
+                                logger.info(_t+" is failure");
+                            })
+                    ._otherwise(() -> {
+                        logger.info("otherwise("+t+")");
+                    })
             );
             assertExceptionLogged(runtimeOops);
             assertInfoLogged(msg -> msg.endsWith(" is failure"));
@@ -295,8 +313,9 @@ public class TryCatchTestCase {
             Try<Integer> t = Try.success(1);
             t.onComplete(
                     _case(PartialFunctions.downcast((Try<Integer> _t) -> (Success<Integer>)_t))
-                            .thenAccept(_t ->
-                                    logger.info("result is "+_t.result()))
+                            .andThen(_t -> {
+                                    logger.info("result is "+_t.result());
+                            })
             );
             assertInfoLogged(msg -> msg.startsWith("result is"));
         }

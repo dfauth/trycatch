@@ -4,16 +4,41 @@ import com.github.dfauth.trycatch.Failure;
 import com.github.dfauth.trycatch.Success;
 import com.github.dfauth.trycatch.Try;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
-import static com.github.dfauth.partial.PartialFunction.fromPredicate;
-import static com.github.dfauth.partial.PartialFunction.fromPredicateAndFunction;
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public class PartialFunctions {
+
+    static <T,R> PartialFunction<T,T> fromPredicate(Predicate<T> p) {
+        return fromPredicateAndFunction(p, Function.identity());
+    }
+
+    static <T,R> PartialFunction<T,R> fromFunction(Function<T,R> f) {
+        return fromPredicateAndFunction(x -> true, f);
+    }
+
+    static <T,R> PartialFunction<T,R> fromPredicateAndFunction(Predicate<T> p, Function<T,R> f) {
+        return new PartialFunction<>() {
+            @Override
+            public boolean isDefinedAt(T t) {
+                return p.test(t);
+            }
+
+            @Override
+            public R _apply(T t) {
+                return f.apply(t);
+            }
+        };
+    }
+
+    static <T,R> Function<T, Optional<R>> asFunction(Predicate<T> p, Function<T,R> f) {
+        return fromPredicateAndFunction(p,f).lift();
+    }
 
     public static <I,O> PartialFunction<I,O> _case(PartialFunction<I, O> pf) {
         return pf;
@@ -27,7 +52,7 @@ public class PartialFunctions {
         return fromPredicateAndFunction(p,f);
     }
 
-    public static <I,O> PartialFunction<I,Void> _case(Predicate<I> p, Consumer<I> c) {
+    public static <I,O> PartialFunction<I, Unit> _case(Predicate<I> p, Consumer<I> c) {
         return fromPredicateAndConsumer(p,c);
     }
 

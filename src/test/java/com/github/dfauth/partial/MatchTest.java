@@ -7,10 +7,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Function;
+import java.util.Optional;
 
+import static com.github.dfauth.partial.PartialFunction.of;
+import static com.github.dfauth.partial.Unit.UNIT;
 import static com.github.dfauth.partial.Matcher.matcher;
-import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.partial.PartialFunction.identity;
 import static com.github.dfauth.partial.PartialFunctions.*;
 import static org.junit.Assert.assertEquals;
@@ -31,10 +32,12 @@ public class MatchTest {
     @Test
     public void testIt() {
         Try<Integer> test = Try.success(1);
-        Assert.assertEquals(1, matcher(test).matchOpt(
+        Assert.assertEquals(Optional.of(UNIT), matcher(test).matchOpt(
                 _case(downcast((Try<Integer> t) -> (Success<Integer>)t)
-                        .thenMap(s -> s.result()))
-                ).orElse(0).intValue()
+                        .andThen(s -> {
+                            s.result();
+                        }))
+                )
         );
     }
 
@@ -42,14 +45,12 @@ public class MatchTest {
     public void testAndIf() {
         {
             Try<Integer> test = Try.success(1);
-            assertEquals("ONE", matcher(test).matchOpt(
+            assertEquals(Optional.of("ONE"), matcher(test).matchOpt(
                     _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
-                            .andIf(s -> s.result() == 1))
-                            .thenMap(s -> "ONE"))
-                    .orElse("NO_MATCH")
-            );
+                            .andThen(of(s -> s.result() == 1, s -> "ONE")))
+            ));
         }
-        {
+/**        {
             Try<Integer> test = Try.success(0);
             assertEquals("NO_MATCH", matcher(test).matchOpt(
                     _case(downcast((Try<Integer> a) -> (Success<Integer>)a)
@@ -103,7 +104,7 @@ public class MatchTest {
         {
             Try<Integer> test = Try.success(1);
             assertEquals("NO_MATCH", f.apply(test));
-        }
+        } **/
     }
 
 

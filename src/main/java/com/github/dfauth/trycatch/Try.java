@@ -1,6 +1,7 @@
 package com.github.dfauth.trycatch;
 
-import com.github.dfauth.partial.PartialConsumer;
+import com.github.dfauth.partial.Unit;
+import com.github.dfauth.partial.PartialFunction;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -13,11 +14,12 @@ import static com.github.dfauth.trycatch.TryCatch.*;
 
 public interface Try<T> {
 
-    default void onComplete(PartialConsumer<Try<T>>... partials) {
-        Stream.of(partials).filter(p -> p.isDefinedAt(this)).map(p -> {
-            p.accept(this);
-            return p;
-        }).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
+    default void onComplete(PartialFunction<Try<T>, Unit>... partials) {
+        Stream.of(partials).filter(p -> p.isDefinedAt(this)).map(p -> p._apply(this)).findFirst().orElseThrow(() -> new IllegalArgumentException("Not matched"));
+    }
+
+    default void onComplete(Function<Try<T>, Unit> f) {
+        f.apply(this);
     }
 
     default Try<T> recover(Function<Throwable,T> f) {

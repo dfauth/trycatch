@@ -15,7 +15,8 @@ import static com.github.dfauth.partial.Matcher.matcher;
 import static com.github.dfauth.partial.PartialConsumer.fromPredicateAndConsumer;
 import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.partial.Tuple2.of;
-import static junit.framework.TestCase.assertEquals;
+import static com.github.dfauth.trycatch.Try.tryWith;
+import static junit.framework.TestCase.*;
 
 public class PartialFunctionTest {
 
@@ -23,6 +24,23 @@ public class PartialFunctionTest {
     private Predicate<Tuple2<Boolean, Boolean>> matchBoth = t -> t._1() && t._2();
     private Predicate<Tuple2<Boolean, Boolean>> match1 = t -> t._1() && !t._2();
     private Predicate<Tuple2<Boolean, Boolean>> match2 = t -> !t._1() && t._2();
+
+    @Test
+    public void testIt() {
+        PartialFunction<Integer, String> pf = PartialFunction.of(tIs(1), i -> "ONE");
+        assertTrue(pf.isDefinedAt(1));
+        assertFalse(pf.isDefinedAt(0));
+        assertEquals("ONE", pf.apply(1));
+        assertTrue(tryWith(() -> pf.apply(2)).isFailure());
+
+        PartialFunction<Integer, String> pf2 = PartialFunction.of(tIs(2), i -> "TWO");
+        PartialFunction<Integer, String> pf3 = PartialFunction.of(tIs(3), i -> "THREE");
+
+        assertEquals("ONE", pf._or(pf2).apply(1));
+        assertEquals("TWO", pf._or(pf2)._or(pf3).apply(2));
+        assertEquals("THREE", pf._or(pf2)._or(pf3).apply(3));
+        assertTrue(tryWith(() -> pf._or(pf2)._or(pf3).apply(4)).isFailure());
+    }
 
     @Test
     public void testSanity() {
@@ -41,7 +59,7 @@ public class PartialFunctionTest {
         PartialConsumer<Integer> is2 = fromPredicateAndConsumer(tIs(2), t -> result.set(69));
         PartialConsumer<Integer> is3 = fromPredicateAndConsumer(tIs(3), t -> result.set(34));
         Runnable doNothing = () -> {};
-        Function<Integer, Void> pf = is1._or(is2)._or(is3)._otherwise(doNothing);
+        Function<Integer, Unit> pf = is1._or(is2)._or(is3)._otherwise(doNothing);
         {
             result.set(-1);
             matcher(1).match(pf);

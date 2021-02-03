@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-import static com.github.dfauth.partial.VoidFunction.peek;
+import static com.github.dfauth.partial.Unit.Function.peek;
 import static com.github.dfauth.trycatch.ThrowableHandlers.consume;
 import static com.github.dfauth.trycatch.ThrowableHandlers.noOp;
 
