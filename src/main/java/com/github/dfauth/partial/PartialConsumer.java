@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.github.dfauth.partial.Unit.Function.peek;
+import static com.github.dfauth.function.Function2.peek;
 import static com.github.dfauth.partial.Unit.UNIT;
 
 public interface PartialConsumer<I> extends PartialFunction<I, Unit> {

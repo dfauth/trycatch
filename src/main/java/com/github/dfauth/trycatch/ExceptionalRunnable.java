@@ -1,15 +1,18 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.Unit;
+
 import java.util.concurrent.Callable;
 
+import static com.github.dfauth.partial.Unit.UNIT;
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 @FunctionalInterface
-public interface ExceptionalRunnable extends Callable<Void>, Runnable {
+public interface ExceptionalRunnable extends Callable<Unit>, Runnable {
 
-    default Void call() throws Exception {
+    default Unit call() throws Exception {
         _run();
-        return null;
+        return UNIT;
     }
 
     default void run() {
@@ -17,8 +20,4 @@ public interface ExceptionalRunnable extends Callable<Void>, Runnable {
     }
 
     void _run() throws Exception;
-
-    static Runnable toRunnable(ExceptionalRunnable r) {
-        return r;
-    }
 }

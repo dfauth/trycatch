@@ -1,8 +1,9 @@
 package com.github.dfauth.function;
 
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
+
+import static com.github.dfauth.trycatch.TryCatch.ignored;
+import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public interface Function2<T,U,V> extends BiFunction<T,U,V> {
 
@@ -30,8 +31,15 @@ public interface Function2<T,U,V> extends BiFunction<T,U,V> {
         return (t,u) -> f.apply(t).apply(u);
     }
 
-    static <T> Predicate<T> asPredicate(Function<T, Boolean> f) {
+    static <T> Predicate<T> toPredicate(Function<T, Boolean> f) {
         return t -> f.apply(t);
+    }
+
+    static <T> UnaryOperator<T> peek(Consumer<T> c) {
+        return t -> {
+            tryCatch(() -> c.accept(t), ignored);
+            return t;
+        };
     }
 
 }

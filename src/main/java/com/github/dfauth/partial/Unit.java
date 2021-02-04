@@ -1,12 +1,13 @@
 package com.github.dfauth.partial;
 
+import com.github.dfauth.trycatch.ExceptionalRunnable;
+
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 
 public enum Unit {
     UNIT;
 
-    public static Unit run(Runnable r) {
+    public static Unit run(ExceptionalRunnable r) {
         r.run();
         return UNIT;
     }
@@ -30,11 +31,5 @@ public enum Unit {
             return i -> c.accept(i);
         }
 
-        static <T> UnaryOperator<T> peek(Consumer<T> c) {
-            return t -> {
-                c.accept(t);
-                return t;
-            };
-        }
     }
 }

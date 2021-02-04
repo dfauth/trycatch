@@ -1,5 +1,6 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.Unit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,10 +10,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-import static com.github.dfauth.function.Function2.asPredicate;
-import static com.github.dfauth.partial.Unit.Function.peek;
-import static com.github.dfauth.trycatch.ThrowableHandlers.consume;
-import static com.github.dfauth.trycatch.ThrowableHandlers.noOp;
+import static com.github.dfauth.function.Function2.peek;
+import static com.github.dfauth.function.Function2.toPredicate;
+import static com.github.dfauth.partial.Unit.UNIT;
 
 public class TryCatch {
 
@@ -20,9 +20,13 @@ public class TryCatch {
 
     public static UnaryOperator<Throwable> loggingOperator = peek(t -> logger.error(t.getMessage(), t));
 
-    public static Function<Throwable,Void> propagationHandler = t -> {
+    public static Function<Throwable, Unit> propagationHandler = t -> {
             throw new RuntimeException(t);
     };
+
+    public static Function<Throwable, Unit> noOp = t -> UNIT;
+
+    public static Consumer<Throwable> ignored = t -> {};
 
     public static Function<Throwable,Boolean> alwaysTrue = defaultValueOf(true);
 
@@ -33,11 +37,11 @@ public class TryCatch {
     }
 
     public static <T> Predicate<T> alwaysTrue() {
-        return asPredicate(always(true));
+        return toPredicate(always(true));
     }
 
     public static <T> Predicate<T> alwaysFalse() {
-        return asPredicate(always(false));
+        return toPredicate(always(false));
     }
 
     public static <T,R> Function<T,R> always(R r) {
@@ -54,6 +58,10 @@ public class TryCatch {
 
     public static void tryCatch(ExceptionalRunnable r) {
         tryCatch(r, loggingOperator.andThen(propagationHandler), noOpFinalRunnable);
+    }
+
+    public static void tryCatch(ExceptionalRunnable r, Consumer<Throwable> handler) {
+        tryCatch(r, loggingOperator.andThen(Unit.Function.of(handler)), noOpFinalRunnable);
     }
 
     public static <T> T tryCatch(Callable<T> c) {
@@ -75,11 +83,11 @@ public class TryCatch {
     }
 
     public static void tryCatchIgnore(ExceptionalRunnable r) {
-        tryCatch(r, loggingOperator.andThen(noOp()), noOpFinalRunnable);
+        tryCatch(r, loggingOperator.andThen(noOp), noOpFinalRunnable);
     }
 
     public static void tryCatchIgnore(ExceptionalRunnable r, Consumer<Throwable> c) {
-        tryCatch(r, loggingOperator.andThen(consume(c)), noOpFinalRunnable);
+        tryCatch(r, loggingOperator.andThen(Unit.Function.of(c)), noOpFinalRunnable);
     }
 
     public static <T> T tryCatchIgnore(Callable<T> c, T defaultValueOfT) {
@@ -87,11 +95,11 @@ public class TryCatch {
     }
 
     public static void tryCatchSilentlyIgnore(ExceptionalRunnable r) {
-        tryCatch(r, noOp(), noOpFinalRunnable);
+        tryCatch(r, noOp, noOpFinalRunnable);
     }
 
     public static void tryCatchSilentlyIgnore(ExceptionalRunnable r, Consumer<Throwable> c) {
-        tryCatch(r, consume(c), noOpFinalRunnable);
+        tryCatch(r, Unit.Function.of(c), noOpFinalRunnable);
     }
 
     public static <T> T tryCatchSilentlyIgnore(Callable<T> c, T defaultValueOfT) {
@@ -133,4 +141,5 @@ public class TryCatch {
     public static <T> Callable<T> withExceptionLogging(Callable<T> c) {
         return () -> tryCatch(c);
     }
+
 }

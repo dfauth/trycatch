@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.github.dfauth.partial.PartialFunctions._case;
-import static com.github.dfauth.partial.Unit.Function.peek;
+import static com.github.dfauth.function.Function2.peek;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
 import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
 import static com.github.dfauth.trycatch.Try.tryWith;
