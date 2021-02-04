@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 public enum Unit {
     UNIT;
 
-    public static Unit run(ExceptionalRunnable r) {
+    public static Unit run(ExceptionalRunnable r) throws RuntimeException {
         r.run();
         return UNIT;
     }

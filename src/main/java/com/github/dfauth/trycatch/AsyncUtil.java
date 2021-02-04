@@ -1,17 +1,20 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.Unit;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.github.dfauth.partial.Unit.UNIT;
 import static com.github.dfauth.trycatch.TryCatch.tryCatch;
 
 public class AsyncUtil {
 
-    public static CompletableFuture<Void> executeAsync(ExceptionalRunnable runnable) {
+    public static CompletableFuture<Unit> executeAsync(ExceptionalRunnable runnable) {
         return executeAsync(() -> {
-            tryCatch(runnable, t -> null);
+            tryCatch(runnable, t -> UNIT);
             return null;
         }, Executors.newSingleThreadExecutor());
     }

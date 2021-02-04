@@ -6,9 +6,11 @@ import org.slf4j.spi.LoggerFactoryBinder;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +28,7 @@ public class AssertingLogger implements LoggerFactoryBinder, ILoggerFactory {
     }
 
     public static void assertNothingLogged() {
-        assertTrue(q.isEmpty());
+        assertTrue("Expected no logging message, but found: "+q.peek(),q.isEmpty());
     }
 
     public static void resetLogEvents() {
@@ -34,7 +36,7 @@ public class AssertingLogger implements LoggerFactoryBinder, ILoggerFactory {
     }
 
     public static void assertExceptionLogged(Throwable t) {
-        assertFalse(q.isEmpty());
+        assertFalse(String.format("Expected exception %s, but found nothing was thrown",t.getMessage()),q.isEmpty());
         Call call = q.remove();
         assertTrue(call.isError());
         assertTrue("Expected "+t.getMessage()+" but received "+call.argument(0).get(), call.argument(0).map(_t -> _t.equals(t.getMessage())).orElse(false));
@@ -95,6 +97,11 @@ public class AssertingLogger implements LoggerFactoryBinder, ILoggerFactory {
 
         public boolean isInfo() {
             return "info".equals(methodName);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("call to method %s with arguments %s", methodName, Arrays.asList(args).stream().map(Object::toString).collect(Collectors.joining(",")));
         }
     }
 }

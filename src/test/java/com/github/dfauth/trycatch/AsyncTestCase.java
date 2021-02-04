@@ -1,5 +1,6 @@
 package com.github.dfauth.trycatch;
 
+import com.github.dfauth.partial.Unit;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -59,8 +60,8 @@ public class AsyncTestCase {
     public void testRunnable() throws InterruptedException, ExecutionException, TimeoutException {
 
         {
-            CompletableFuture<Void> f = executeAsync(() -> {});
-            Void result = f.get(1, TimeUnit.SECONDS);
+            CompletableFuture<Unit> f = executeAsync(() -> {});
+            Unit result = f.get(1, TimeUnit.SECONDS);
             assertNothingLogged();
         }
 
@@ -68,7 +69,7 @@ public class AsyncTestCase {
             AtomicReference<Optional<Integer>> blah = new AtomicReference<>();
             CompletableFuture<Void> f = executeAsync(() -> {
                 blah.set(Optional.ofNullable(1));
-            }).thenAccept(withExceptionLogging((Consumer<Void>) _void -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
+            }).thenAccept(withExceptionLogging((Consumer<Unit>) _unit -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
             assertEquals(2, blah.get().get().intValue());
             assertNothingLogged();
         }
@@ -77,7 +78,7 @@ public class AsyncTestCase {
             AtomicReference<Optional<Integer>> blah = new AtomicReference<>();
             CompletableFuture<Void> f = executeAsync(() -> {
                 blah.set(Optional.ofNullable(0));
-            }).thenAccept(withExceptionLogging((Consumer<Void>) _void -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
+            }).thenAccept(withExceptionLogging((Consumer<Unit>) _unit -> blah.get().ifPresent(b -> blah.set(Optional.ofNullable(2/b)))));
             assertThrows(ExecutionException.class, () -> f.get(1, TimeUnit.SECONDS));
             assertExceptionLogged(new ArithmeticException("/ by zero"));
         }

@@ -10,10 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.function.Function2.peek;
+import static com.github.dfauth.partial.PartialFunctions._case;
 import static com.github.dfauth.trycatch.AssertingLogger.*;
-import static com.github.dfauth.trycatch.ExceptionalConsumer.toConsumer;
 import static com.github.dfauth.trycatch.Try.tryWith;
 import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
@@ -140,12 +139,14 @@ public class TryCatchTestCase {
 
         // ExceptionalConsumer
         {
-            assertTrue(tryWith(() -> Optional.of(CompletableFuture.completedFuture(result)).ifPresent(toConsumer(_f -> _f.get(1, TimeUnit.SECONDS)))).isSuccess());
+            assertTrue(tryWith(() -> Optional.of(CompletableFuture.completedFuture(result)).ifPresent(ExceptionalConsumer.of(_f -> _f.get(1, TimeUnit.SECONDS)))).isSuccess());
             assertNothingLogged();
         }
         {
-            assertTrue(tryWith(() -> Optional.of(CompletableFuture.failedFuture(oops)).ifPresent(toConsumer(_f -> _f.get(1, TimeUnit.SECONDS)))).isSuccess());
+            assertTrue(tryWith(() -> Optional.of(CompletableFuture.failedFuture(oops)).ifPresent(ExceptionalConsumer.of(_f -> _f.get(1, TimeUnit.SECONDS)))).isFailure());
             assertExceptionLogged(new ExecutionException(oops));
+            assertExceptionLogged(new RuntimeException(new ExecutionException(oops))); // TODO why?
+            assertExceptionLogged(new RuntimeException(new RuntimeException(new ExecutionException(oops)))); // TODO why?
             assertNothingLogged();
         }
 
@@ -183,7 +184,7 @@ public class TryCatchTestCase {
         }
 
         {
-            Try<Void> t = tryWith(() -> {
+            Try<Unit> t = tryWith(() -> {
                 throw runtimeOops;
             });
             assertNotNull(t);
