@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 import static com.github.dfauth.partial.PartialFunctions.fromPredicateAndFunction;
 import static com.github.dfauth.partial.Unit.UNIT;
-import static com.github.dfauth.partial.Unit.run;
 
 public interface PartialFunction<I,O> {
 
@@ -52,7 +51,9 @@ public interface PartialFunction<I,O> {
     }
 
     default <U> PartialFunction<I, Unit> andThen(Consumer<O> c) {
-        return of(asPredicate(), i -> run(() -> c.accept(_apply(i))));
+        return of(asPredicate(), Unit.Function.of(i -> {
+            c.accept(_apply(i));
+        }));
     }
 
     default <V> PartialFunction<I, O> _or(PartialFunction<I,O>... partials) {
@@ -78,7 +79,7 @@ public interface PartialFunction<I,O> {
     default PartialFunction<I, Unit> _or(Predicate<I> p, Consumer<I> c) {
         return fromPredicateAndFunction(
                 asPredicate().or(p),
-                i -> isDefinedAt(i) ? run(() -> apply(i)) : p.test(i) ? run(() -> c.accept(i)) : UNIT
+                i -> isDefinedAt(i) ? Unit.of(() -> apply(i)) : p.test(i) ? Unit.Function.of(c).apply(i) : UNIT
         );
     }
 
@@ -107,7 +108,7 @@ public interface PartialFunction<I,O> {
     }
 
     default Function<I, Unit> orGet(Runnable r) {
-            return i -> isDefinedAt(i) ? run(() -> apply(i)) : Unit.Function.of(r).apply(i);
+            return i -> isDefinedAt(i) ? Unit.of(() -> apply(i)) : Unit.of(() -> r.run());
     }
 
     default Tuple2<Predicate<I>, Function<I,O>> decompose() {

@@ -1,13 +1,16 @@
 package com.github.dfauth.partial;
 
+import com.github.dfauth.trycatch.CallableFunction;
 import com.github.dfauth.trycatch.ExceptionalRunnable;
 
 import java.util.function.Consumer;
 
+import static com.github.dfauth.trycatch.TryCatch.tryCatch;
+
 public enum Unit {
     UNIT;
 
-    public static Unit run(ExceptionalRunnable r) throws RuntimeException {
+    public static Unit of(ExceptionalRunnable r) {
         r.run();
         return UNIT;
     }
@@ -27,8 +30,18 @@ public enum Unit {
             return i -> f.apply(i);
         }
 
+        static <I,O> Function<I> of(CallableFunction<I, O> f) {
+            return t -> tryCatch(() -> {
+                return f.apply(t).call();
+            });
+        }
+
         static <I> Function<I> of(Consumer<I> c) {
             return i -> c.accept(i);
+        }
+
+        static Function<Unit> of(ExceptionalRunnable r) {
+            return ignored -> r.run();
         }
 
     }

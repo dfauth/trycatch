@@ -126,7 +126,7 @@ public class TryCatch {
         return i -> tryCatchIgnore(f.apply(i), defaultValue);
     }
 
-    public static <T> Consumer<T> withExceptionLogging(ExceptionalConsumer<T> c) {
+    public static <T> Consumer<T> withExceptionLogging(CallableFunction.Consumer<T> c) {
         return i -> tryCatch(() -> c.accept(i));
     }
 
