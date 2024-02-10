@@ -1,12 +1,12 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.util.concurrent.*;
 
-import static com.github.dfauth.trycatch.ExceptionalRunnable.*;
-import static com.github.dfauth.trycatch.Try.tryWith;
+import static io.github.dfauth.trycatch.ExceptionalRunnable.*;
+import static io.github.dfauth.trycatch.Try.tryWith;
 import static org.junit.Assert.*;
 
 @Slf4j

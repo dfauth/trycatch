@@ -1,4 +1,4 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,17 +8,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.github.dfauth.trycatch.FunctionalUtils.adapt;
-import static com.github.dfauth.trycatch.FunctionalUtils.peek;
-import static com.github.dfauth.trycatch.Try.tryWith;
+import static io.github.dfauth.trycatch.FunctionalUtils.adapt;
+import static io.github.dfauth.trycatch.FunctionalUtils.peek;
+import static io.github.dfauth.trycatch.Try.tryWith;
 
 public interface ExceptionalRunnable extends Callable<Void>, Runnable {
 
 
     static Runnable toRunnable(ExceptionalRunnable runnable) {
-        return () -> {
-            tryCatchRunnable(() -> runnable._run(),log.andThen(adapt(propagate())));
-        };
+        return () -> tryCatchRunnable(runnable,log.andThen(adapt(propagate())));
     }
 
     Executor runInCallingThread = Runnable::run;

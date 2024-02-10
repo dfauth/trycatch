@@ -1,11 +1,11 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
-import static com.github.dfauth.trycatch.ExceptionalRunnable.tryCatch;
+import static io.github.dfauth.trycatch.ExceptionalRunnable.tryCatch;
 
 @Slf4j
 public class FunctionalUtils {

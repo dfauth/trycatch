@@ -1,14 +1,14 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 
-import static com.github.dfauth.trycatch.BigDecimalOps.HUNDRED;
-import static com.github.dfauth.trycatch.BigDecimalOps.divide;
-import static com.github.dfauth.trycatch.Try.success;
-import static com.github.dfauth.trycatch.Try.tryWith;
+import static io.github.dfauth.trycatch.BigDecimalOps.HUNDRED;
+import static io.github.dfauth.trycatch.BigDecimalOps.divide;
+import static io.github.dfauth.trycatch.Try.success;
+import static io.github.dfauth.trycatch.Try.tryWith;
 import static java.math.BigDecimal.ZERO;
 import static org.junit.Assert.*;
 

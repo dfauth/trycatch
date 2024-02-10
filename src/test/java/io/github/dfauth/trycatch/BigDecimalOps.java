@@ -1,4 +1,4 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

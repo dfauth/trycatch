@@ -1,4 +1,4 @@
-package com.github.dfauth.trycatch;
+package io.github.dfauth.trycatch;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,8 +8,6 @@ import lombok.ToString;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
-
-import static com.github.dfauth.trycatch.ExceptionalRunnable.tryCatch;
 
 public interface Try<T> {
 
