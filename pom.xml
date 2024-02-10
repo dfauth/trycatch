@@ -5,7 +5,7 @@
 
   <groupId>io.github.dfauth</groupId>
   <artifactId>trycatch</artifactId>
-  <version>0.1.6-SNAPSHOT</version>
+  <version>0.1.6</version>
 
   <name>trycatch</name>
   <description>inline handling of checked exceptions</description>
@@ -52,7 +52,7 @@
     <connection>scm:git:git@github.com:dfauth/trycatch.git</connection>
     <url>scm:git:git@github.com:dfauth/trycatch.git</url>
     <developerConnection>scm:git:git@github.com:dfauth/trycatch.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.1.6</tag>
   </scm>
 
   <dependencies>
