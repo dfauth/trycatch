@@ -1,31 +1,28 @@
 package com.github.dfauth.trycatch;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 
+import static com.github.dfauth.trycatch.ExceptionalRunnable.*;
 import static com.github.dfauth.trycatch.Try.tryWith;
-import static com.github.dfauth.trycatch.TryCatch.*;
 import static org.junit.Assert.*;
 
+@Slf4j
 public class TestCase {
-
-    private static final Logger logger = LoggerFactory.getLogger(TestCase.class);
 
     @Test
     public void testTryCatch() {
 
         // Runnable
-        tryCatch(() -> {
-        });
+        tryCatchRunnable(() -> {});
 
         // Callable
         assertEquals(1, tryCatch(() -> 1).intValue());
 
         // void return throws exception
-        tryCatch(() -> Thread.sleep(100));
+        tryCatchRunnable(() -> Thread.sleep(100));
 
         // Runnable
         try {
@@ -40,10 +37,7 @@ public class TestCase {
         // Callable
         try {
             tryCatch(() -> {
-                if (true) {
-                    throw new Exception("Oops");
-                }
-                return 1;
+                throw new Exception("Oops");
             });
             fail("Oops, expected exception");
         } catch (RuntimeException e) {
@@ -68,8 +62,7 @@ public class TestCase {
             throw new Exception("Oops");
         });
 
-        tryCatchIgnore(() -> {
-        });
+        tryCatchIgnore(() -> {});
 
         assertEquals(1, tryCatchIgnore(() -> {
             throw new Exception("Oops");
@@ -80,27 +73,24 @@ public class TestCase {
     public void testWithExceptionLogging() throws InterruptedException, ExecutionException, TimeoutException {
 
         // Runnable
-        Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {})).get(1, TimeUnit.SECONDS);
+        Executors.newSingleThreadExecutor().submit(toRunnable(() -> {})).get(1, TimeUnit.SECONDS);
 
         // Callable
         String result = "result";
-        assertEquals(result, Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> result)).get(1, TimeUnit.SECONDS));
+        assertEquals(result, Executors.newSingleThreadExecutor().submit(() -> result).get(1, TimeUnit.SECONDS));
 
         // ExceptionalRunnable
-        Future<?> f = Executors.newSingleThreadExecutor().submit(withExceptionLogging(() -> {
+        Future<?> f = Executors.newSingleThreadExecutor().submit(toRunnable(() -> {
             throw new Exception("Oops");
         }));
         try {
             f.get(1, TimeUnit.SECONDS);
             fail("Oops. expected ExecutionException");
         } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
             // expected
-        } catch (TimeoutException e) {
-            logger.error(e.getMessage(), e);
-            throw new RuntimeException(e);
         }
     }
 
@@ -134,8 +124,8 @@ public class TestCase {
             Try<Integer> result = t.map(v -> 1/v);
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertTrue(result.toFailure().exception() instanceof ArithmeticException);
-            assertEquals(result.toFailure().exception().getMessage(), "/ by zero");
+            assertTrue(result.toFailure().getThrowable() instanceof ArithmeticException);
+            assertEquals(result.toFailure().getThrowable().getMessage(), "/ by zero");
         }
     }
 
@@ -148,7 +138,7 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isSuccess());
-            assertEquals(2, result.toSuccess().result().intValue());
+            assertEquals(2, result.toSuccess().getValue().intValue());
         }
 
         {
@@ -161,7 +151,7 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertEquals(oops, result.toFailure().exception());
+            assertEquals(oops, result.toFailure().getThrowable());
         }
 
         {
@@ -171,9 +161,8 @@ public class TestCase {
             Try<Integer> result = t.flatMap(v -> tryWith(() -> 2/v));
             assertNotNull(result);
             assertTrue(result.isFailure());
-            assertThrows(ArithmeticException.class, () -> {
-                result.toFailure().throwException();
-            });
+            assertTrue(result.toFailure().getThrowable() instanceof ArithmeticException);
+            assertThrows(ArithmeticException.class, () -> result.toFailure().getValue());
         }
     }
 
@@ -184,7 +173,7 @@ public class TestCase {
             CompletableFuture<Try<Integer>> f = executeAsync(() -> 1).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isSuccess());
-            assertEquals(2, result.toSuccess().result().intValue());
+            assertEquals(2, result.toSuccess().getValue().intValue());
         }
 
         {
@@ -196,7 +185,7 @@ public class TestCase {
             CompletableFuture<Try<Integer>> f = executeAsync(() -> 0).thenApply(i -> tryWith(() -> 2/i));
             Try<Integer> result = f.get(1, TimeUnit.SECONDS);
             assertTrue(result.isFailure());
-            assertThrows(ArithmeticException.class, () -> result.toFailure().throwException());
+            assertThrows(ArithmeticException.class, () -> result.toFailure().getValue());
         }
     }
 
@@ -210,7 +199,7 @@ public class TestCase {
             T result = callable.call();
             f.complete(result);
             return result;
-        }, t -> f.completeExceptionally(t)));
+        }, f::completeExceptionally));
         return f;
     }
 
