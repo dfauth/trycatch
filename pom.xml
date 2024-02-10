@@ -5,7 +5,7 @@
 
   <groupId>io.github.dfauth</groupId>
   <artifactId>trycatch</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.1.1</version>
 
   <name>trycatch</name>
 
@@ -34,7 +34,7 @@
     <connection>scm:git:git@github.com:dfauth/trycatch.git</connection>
     <url>scm:git:git@github.com:dfauth/trycatch.git</url>
     <developerConnection>scm:git:git@github.com:dfauth/trycatch.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.1.1</tag>
   </scm>
 
   <dependencies>
